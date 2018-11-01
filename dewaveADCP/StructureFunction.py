@@ -1,6 +1,8 @@
 import numpy as np
 
 
+def dewave_structurefuntion():
+    raise NotImplementedError
 
 
 def calcDLL(vp, rx=None, remove_shear=True, how_odd='mean_sqseps'):
@@ -86,16 +88,22 @@ def calcDLL(vp, rx=None, remove_shear=True, how_odd='mean_sqseps'):
         return DLL
 
 
-def calcepsilon(DLL, rx, C2=2.1):
+def calcepsilon(DLL, rx, C2=2.0, method='modified'):
     """
     USAGE
     -----
     epsilon = calcepsilon(DLL, method='scannell_etal2017')
 
+    C2: Turbulent constant in the Kolmogorov scaling
+
     Calculate Turbulent Kinetic energy (TKE) rate of dissipation (epsilon) from the second-order
     turbulence structure function (DLL) derived from along-beam ADCP velocity measurements.
     """
     r23 = rx**(2/3) # [m^{2/3}].
-    # Fit line (or cubic polynomial if method=='scannell_etal2017') to the measured structure function.
-    epsilon = DLL
+    # Fit line (or cubic polynomial if method=='modified') to the measured structure function DLL(x,r**(2/3)).
+    # In the cubic-polynomial case (Scannell et al., 2017),
+    # DLL(x,r) has a quadratic dependence on 'r', since [r**(2/3)]**3 = r**2.
+    if method=='standard': # Fit a line to r**(2/3).
+    epsilon = (A1/C2)**(3/2)
+
     return None
