@@ -26,3 +26,11 @@ var/
 
 # Cached pickle files.
 *.pkl
+
+# Figures and scratch testing files.
+*.png
+dewaveADCP/scratch/
+dewaveADCP/test.py
+dewaveADCP/test2.py
+dewaveADCP/test3.py
+dewaveADCP/test4.py
