@@ -6,9 +6,9 @@ def lstsqfit(d, r, n=1):
     """
     USAGE
     -----
-    Gm = lstsq(d, n=1)
+    Gm = lstsq(d, r, n=1)
 
-    Fit an 'n'-th order polynomial to the input data vector by solving an overdetermined least-squares polynomial problem of degree 'n' (default 1).
+    Fit an 'n'-th order polynomial to the input data vector by solving an overdetermined least-squares problem of degree 'n' (default 1).
     """
     d = np.matrix(np.array(d)).T
     nd = d.size
@@ -19,13 +19,15 @@ def lstsqfit(d, r, n=1):
     G = np.matrix(np.array([], ndmin=2))
 
     for pw in range(n, 0, -1):
+        mm = np.matrix(r**pw).T
         if pw==n:
-            G = np.matrix(r**pw).T
+            G = mm
         else:
-            G = np.hstack((G, np.matrix(r**pw).T))
+            G = np.hstack((G, mm))
 
-    col1s = np.matrix(np.ones((nd, 1))).T
-    G = np.concatenate((G, col1s))
+    col1s = np.matrix(np.ones((nd, 1)))
+    G = np.hstack((G, col1s))
+
     GT = G.T
     m = solve(GT*G, GT*d) # m = (GT*G).I*GT*d.T
 
@@ -35,6 +37,7 @@ def lstsqfit(d, r, n=1):
 d2r = np.pi/180
 def sind(ang):
     return np.sin(ang*d2r)
+
 
 def cosd(ang):
     return np.cos(ang*d2r)
