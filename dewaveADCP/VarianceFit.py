@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import curve_fit
-from utils import sind, cosd
+from .utils import sind, cosd
 
 
 # Whipple et al. (2006) assume waves propagate in beams 1-2's direction:

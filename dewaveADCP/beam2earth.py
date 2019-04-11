@@ -2,7 +2,7 @@
 # Direct translation of functions in the 'ADCPtools' MATLAB
 # package (https://github.com/apaloczy/ADCPtools).
 import numpy as np
-from utils import sind, cosd
+from .utils import sind, cosd
 
 d2r = np.pi/180
 

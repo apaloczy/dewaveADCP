@@ -1,9 +1,8 @@
 # Functions for calculating velocity covariances (Reynolds stresses) from a moored ADCP.
 import numpy as np
-from VarianceFit import varfitw, sgwvar_func, calc_beta
-from VerticalDetrend import dewave_verticaldetrend
-from utils import sind, cosd
-from ap_tools.fit import fourfilt
+from .VarianceFit import varfitw, sgwvar_func, calc_beta
+from .VerticalDetrend import dewave_verticaldetrend
+from .utils import sind, cosd, fourfilt
 
 d2r = np.pi/180
 

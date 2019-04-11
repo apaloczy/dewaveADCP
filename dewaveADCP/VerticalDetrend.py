@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import polyfit, polyval
 from scipy.optimize import curve_fit
-from utils import sind, cosd, lstsqfit
+from .utils import sind, cosd, lstsqfit
 
 
 def fexp(x, a, b, c):
