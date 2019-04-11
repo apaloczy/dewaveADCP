@@ -52,7 +52,7 @@ def calcvp(v, normalize=True):
         vp = v - np.nanmedian(v, axis=1)[:, np.newaxis, :, :] # Remove z-average.
 
         # now remove background shear
-        vp = v - np.nanmean(v, axis=2)[:, :, np.newaxis, :]
+        vp = vp - np.nanmean(vp, axis=2)[:, :, np.newaxis, :]
     else:
         # remove backbround shear without normalising data first
         vp = v - np.nanmean(v, axis=2)[:, :, np.newaxis, :] # Remove t-average.
