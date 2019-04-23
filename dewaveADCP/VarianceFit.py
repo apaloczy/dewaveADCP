@@ -4,10 +4,10 @@ from .utils import sind, cosd
 
 
 # Whipple et al. (2006) assume waves propagate in beams 1-2's direction:
-# bwvar = c1*(np.cosh(c2*(z + h)) - cosd(2*theta) )
+# bwvar = c1*(cosh(c2*(z + h)) - cosd(2*theta) )
 # Rosman et al. (2008) allow for an angle alpha
 # between ADCP's beams 1-2 axis and wavenumber's direction:
-# c1*((A + B)*np.cosh(c2*(z + h)) + (A - B)), with A, B defined below.
+# c1*((A + B)*cosh(c2*(z + h)) + (A - B)), with A, B defined below.
 def sgwvar_func(h, theta, alpha):
     def fsgwvar(z, c1, c2):
         A = (cosd(alpha)*sind(theta))**2
@@ -31,10 +31,11 @@ def varfitw(z, bvar, fsgwvar, c1c2guess=(0.2, 0.4)):
     """
     fnan = np.isnan(bvar)
     fnnan = ~fnan
-    if fnan.all():
-        Warning('All-NaN beam variance profile.')
+    if fnan.sum()>4:
+        Warning('Too many NaNs on beam variance profile. Skipping this profile')
         return bvar
 
+    print("Using guess c1, c2 = %.f, %.f for exp fit."%c1c2guess)
     z0, bvar0 = z[fnnan], bvar[fnnan]
     c1c2, _ = curve_fit(fsgwvar, z0, bvar0, p0=c1c2guess, maxfev=10000)
 

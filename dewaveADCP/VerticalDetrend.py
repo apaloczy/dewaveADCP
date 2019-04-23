@@ -32,7 +32,7 @@ def dewave_verticaldetrend(b, r, theta, ptch, roll, dpoly='exp', params_guess=(-
                 bzi = bz[fgud, i]
                 try:
                     params, _ = curve_fit(fexp, z[fgud], bzi, p0=params_guess, maxfev=100000)
-                except RuntimeError:
+                except:
                     Warning('curve_fit() fail. Skipping this profile.')
                     continue
                 a, b, c = params
