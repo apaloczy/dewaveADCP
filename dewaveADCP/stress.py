@@ -167,7 +167,7 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True):
     return vw
 
 
-def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, **kw):
+def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
@@ -187,7 +187,7 @@ def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
     if lowhi_Tcutoff is None:
         b1 = dewave_verticaldetrend(b1, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
         b2 = dewave_verticaldetrend(b2, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
-    else:
+    else:  # Vertically detrend only high-passed or band-passed signal
         b1hi = b1*np.nan
         b2hi = b1hi.copy()
         b1lo = b1hi.copy()
@@ -206,8 +206,13 @@ def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
         b2hi = dewave_verticaldetrend(b2hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
 
         # Add back to low-passed part to reconstruct the full time series.
-        b1 = b1lo + b1hi
-        b2 = b2lo + b2hi
+
+        if cap_band:
+            b1 = b1lo
+            b2 = b2lo
+        else:
+            b1 = b1lo + b1hi
+            b2 = b2lo + b2hi
 
     b1var, b2var = map(bvar, (b1, b2))
 
@@ -230,7 +235,7 @@ def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
     return uw
 
 
-def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, **kw):
+def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
@@ -250,27 +255,43 @@ def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
     if lowhi_Tcutoff is None: # Vertically detrend total signal.
         b3 = dewave_verticaldetrend(b3, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
         b4 = dewave_verticaldetrend(b4, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
-    else: # Vertically detrend only high-passed signal.
+    else: # Vertically detrend only high-passed or band-passed signal.
         b3hi = b3*np.nan
         b4hi = b3hi.copy()
         b3lo = b3hi.copy()
         b4lo = b3hi.copy()
+        if isinstance(lowhi_Tcutoff, tuple):
+            bandpass = True
+            b3bd = b3hi.copy()
+            b4bd = b3hi.copy()
+            Tmin, Tmax = lowhi_Tcutoff
+            lowhi_Tcutoff = Tmin
+        else:
+            bandpass = False
+
         for k in range(nz):
             b3k, b4k = b3[k,:], b4[k,:]
             b3k[np.isnan(b3k)] = np.nanmean(b3k)
             b4k[np.isnan(b4k)] = np.nanmean(b4k)
-            b3hi[k,:] = fourfilt(b3k, dts, lowhi_Tcutoff, dts/2)
-            b4hi[k,:] = fourfilt(b4k, dts, lowhi_Tcutoff, dts/2)
-            b3lo[k,:] = fourfilt(b3k, dts, nt*dts, lowhi_Tcutoff)
-            b4lo[k,:] = fourfilt(b4k, dts, nt*dts, lowhi_Tcutoff)
 
-        # Detrend only high-passed series to remove waves.
-        b3hi = dewave_verticaldetrend(b3hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
-        b4hi = dewave_verticaldetrend(b4hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
+            if bandpass: # Detrend a band-passed series to remove waves.
+                b3bd[k,:] = fourfilt(b3k, dts, Tmax, Tmin)
+                b4bd[k,:] = fourfilt(b4k, dts, Tmax, Tmin)
+            else: # Detrend only high-passed series to remove waves.
+                # b3hi[k,:] = fourfilt(b3k, dts, lowhi_Tcutoff, dts/2)
+                # b4hi[k,:] = fourfilt(b4k, dts, lowhi_Tcutoff, dts/2)
+                b3lo[k,:] = fourfilt(b3k, dts, nt*dts, lowhi_Tcutoff)
+                b4lo[k,:] = fourfilt(b4k, dts, nt*dts, lowhi_Tcutoff)
+                b3hi = dewave_verticaldetrend(b3hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
+                b4hi = dewave_verticaldetrend(b4hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
 
-        # Add back to low-passed part to reconstruct the full time series.
-        b3 = b3lo + b3hi
-        b4 = b4lo + b4hi
+        if bandpass: # Subtract band-passed signal from total.
+            b3 = b3 - b3bd
+            b4 = b4 - b4bd
+        else: # Take only low-pass filtered part of the signal.
+            b3 = b3lo
+            b4 = b4lo
+
 
     b3var, b4var = map(bvar, (b3, b4))
 
@@ -293,7 +314,7 @@ def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
     return vw
 
 
-def uwrs4_varfit(b1, b2, r, theta, phi2, phi3, h, alpha, sep, enu=None, averaged=True, c1c2guess=(0.2, 0.4)):
+def uwrs4_varfit(b1, b2, r, theta, phi2, phi3, h, alpha, sep, enu=None, c1c2guess=(0.2, 0.4)):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
@@ -309,17 +330,21 @@ def uwrs4_varfit(b1, b2, r, theta, phi2, phi3, h, alpha, sep, enu=None, averaged
 
     phi2, phi3 = phi2*d2r, phi3*d2r
     b1var, b2var = map(bvar, (b1, b2))
-    b1var = np.nanmean(b1var, axis=1)
-    b2var = np.nanmean(b2var, axis=1)
 
     # remove wave signal using the variance fit method
     # (Whipple et al., 2006; Rosman et al., 2008)
+    print("Using guess c1, c2 = %f, %f for exp fit."%c1c2guess)
     fsgw = sgwvar_func(h, theta, alpha)
-    b1varw = varfitw(r, b1var, fsgw, c1c2guess=c1c2guess)
-    b2varw = varfitw(r, b2var, fsgw, c1c2guess=c1c2guess)
+    b1varw = b1var*np.nan
+    b2varw = b1varw.copy()
+    for i in range(phi2.size):
+        b1varw[:,i] = varfitw(r, b1var[:,i], fsgw, c1c2guess=c1c2guess)
+        b2varw[:,i] = varfitw(r, b2var[:,i], fsgw, c1c2guess=c1c2guess)
 
     # Calculate 'beta' from the fitted along-beam wave variance
     # profiles and a specified separation.
+    b1varw = np.nanmean(b1varw, axis=1)
+    b2varw = np.nanmean(b2varw, axis=1)
     beta1, _ = calc_beta(b1varw, sep)
     beta2, zidx = calc_beta(b2varw, sep)
     beta12 = 0.5*(beta1 + beta2)
@@ -362,17 +387,22 @@ def vwrs4_varfit(b3, b4, r, theta, phi2, phi3, h, alpha, sep, enu=None, c1c2gues
 
     phi2, phi3 = phi2*d2r, phi3*d2r
     b3var, b4var = map(bvar, (b3, b4))
-    b3var = np.nanmean(b3var, axis=1)
-    b4var = np.nanmean(b4var, axis=1)
 
     # remove wave signal using the variance fit method
     # (Whipple et al., 2006; Rosman et al., 2008)
+    print("Using guess c1, c2 = %.5f, %.5f for exp fit."%(c1c2guess[0], c1c2guess[1]))
+    # print(c1c2guess[0], c1c2guess[1])
     fsgw = sgwvar_func(h, theta, alpha)
-    b3varw = varfitw(r, b3var, fsgw, c1c2guess=c1c2guess)
-    b4varw = varfitw(r, b4var, fsgw, c1c2guess=c1c2guess)
+    b3varw = b3var*np.nan
+    b4varw = b3varw.copy()
+    for i in range(phi2.size):
+        b3varw[:,i] = varfitw(r, b3var[:,i], fsgw, c1c2guess=c1c2guess)
+        b4varw[:,i] = varfitw(r, b4var[:,i], fsgw, c1c2guess=c1c2guess)
 
     # Calculate 'beta' from the fitted along-beam wave variance
     # profiles and a specified separation.
+    b3varw = np.nanmean(b3varw, axis=1)
+    b4varw = np.nanmean(b4varw, axis=1)
     beta3, _ = calc_beta(b3varw, sep)
     beta4, zidx = calc_beta(b4varw, sep)
     beta34 = 0.5*(beta3 + beta4)
