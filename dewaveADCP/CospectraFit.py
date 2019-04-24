@@ -1,17 +1,21 @@
 import numpy as np
+from xarray import DataArray
 from scipy.optimize import curve_fit
 from scipy.signal import welch
 from .utils import sind, cosd
 from .beam2earth import janus2xyz
+from .StructureFunction import calcvp
 
 
-def calc_Suiui(Bi, fs=1.0, window='hanning', nperseg=1024, normalize_vp=True, **kw):
+def calc_Suiui(Bi, fs=1.0,
+               window='hanning', nperseg=1024, normalize_vp=True, gaps='interpolate', **kw):
     """
     USAGE
     -----
     Su1u1, Su2u2, ..., Sunun = calc_Suiui((b1, b2, ..., bn), fs=1.0, window='hanning',
                                                              nperseg=1024,
-                                                             normalize_vp=True, **kw)
+                                                             normalize_vp=True,
+                                                             gaps='interpolate', **kw)
 
     Returns a tuple of along-beam autospectra (Su1u1, Su2u2, ..., Sunun) from
     a tuple of along-beam velocities.
@@ -21,11 +25,23 @@ def calc_Suiui(Bi, fs=1.0, window='hanning', nperseg=1024, normalize_vp=True, **
     # Fill NaN's with the (time) mean (minimizes side effects on the spectrum).
     # The time-mean of each bin should already be very small [O(1e-7) or smaller],
     # as it has been subtracted out by calcvp().
-    for i in range(len(Bi)):
-        for n in range(Bi[0].shape[0]):
-            bni = Bi[i][n,:]
-            fnan = np.isnan(bni)
-            Bi[i][n,fnan] = np.nanmean(bni)
+    Bi = list(Bi)
+    if normalize_vp:
+        for i in range(len(Bi)):
+            Bi[i] = calcvp(Bi[i], normalize=True)
+
+    if gaps=='mean': # Replace missing values with mean.
+        for i in range(len(Bi)):
+            for n in range(Bi[0].shape[0]):
+                bni = Bi[i][n,:]
+                fnan = np.isnan(bni)
+                Bi[i][n,fnan] = np.nanmean(bni)
+    elif gaps=='interpolate':
+        idx = np.arange(0, Bi[0].shape[1])
+        for i in range(len(Bi)):
+            bi = Bi[i]
+            for n in range(bi.shape[0]):
+                Bi[i][n, :] = DataArray(bi[n, :], coords=dict(t=idx), dims='t').interpolate_na(dim='t', method='linear').values
 
     Suiui = [welch(bi, fs=fs,
                    window=window,
