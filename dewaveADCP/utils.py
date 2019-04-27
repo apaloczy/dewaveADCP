@@ -154,6 +154,44 @@ def ksgw(omega, h):
 	return k
 
 
+def near(x, x0, npts=1, return_index=False):
+    """
+    USAGE
+    -----
+    xnear = near(x, x0, npts=1, return_index=False)
+
+    Finds 'npts' points (defaults to 1) in array 'x'
+    that are closest to a specified 'x0' point.
+    If 'return_index' is True (defauts to False),
+    then the indices of the closest points are
+    returned. The indices are ordered in order of
+    closeness.
+    """
+    x = list(x)
+    xnear = []
+    xidxs = []
+    for n in range(npts):
+        idx = np.nanargmin(np.abs(np.array(x)-x0))
+        xnear.append(x.pop(idx))
+        if return_index:
+            xidxs.append(idx)
+    if return_index: # Sort indices according to the proximity of wanted points.
+        xidxs = [xidxs[i] for i in np.argsort(xnear).tolist()]
+    xnear.sort()
+
+    if npts==1:
+        xnear = xnear[0]
+        if return_index:
+            xidxs = xidxs[0]
+    else:
+        xnear = np.array(xnear)
+
+    if return_index:
+        return xidxs
+    else:
+        return xnear
+
+
 d2r = np.pi/180
 def sind(ang):
     return np.sin(ang*d2r)
