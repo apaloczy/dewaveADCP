@@ -74,11 +74,11 @@ def calc_Couwvw(Su1u1, Su2u2, Su3u3, Su4u4, theta):
     return Couw, Covw
 
 
-def calc_Sww(p, t, z, h, sw_disprel=False, rho=1024, fs=1.0, window='hanning', nperseg=1024, **kw):
+def calc_Sww(p, t, z0, h, sw_disprel=False, rho=1024, fs=1.0, window='hanning', nperseg=1024, **kw):
     """
     USAGE
     -----
-    f, Sww = calc_Sww(p, t, z, h, sw_disprel=True, rho=1024, fs=1.0, window='hanning',
+    f, Sww = calc_Sww(p, t, z0, h, sw_disprel=True, rho=1024, fs=1.0, window='hanning',
                                   nperseg=1024, **kw)
 
     FIXME: Order of magnitude of the Sww returned is wrong.
@@ -90,12 +90,12 @@ def calc_Sww(p, t, z, h, sw_disprel=False, rho=1024, fs=1.0, window='hanning', n
         g = 9.81 # [m2/s2].
         k = omega/np.sqrt(g*h)
     else:
-        k = ksgw(omega, h) # Get k from the linear wave dispersion relation [rad/m].
+        k = np.array([ksgw(om, h) for om in omega]) # Get k from the linear wave dispersion relation [rad/m].
 
     # Convert pressure spectrum to w spectrum at each depth using linear wave theory.
-    cff = (k/(rho*omega))**2
-    tanhkh = np.tanh(k*(z[:,np.newaxis] + h))
-    Sww = Spp*cff*tanhkh**2
+    cff = (k/rho/omega**2)**2
+    tanhkh = np.tanh(k*(z0 + h))**2
+    Sww = Spp*cff*tanhkh
 
     omega = omega/(2*np.pi) # Back to linear frequency.
 
@@ -151,24 +151,20 @@ def Somega2Sk(omega, b1, b2, b3, b4, theta):
     return k
 
 
-def kamel72spec(k):
+def kaimel72spec(k, c1, c2):
     """Free parameters: c1, c2 = (uwstar, k0)."""
-    def fkamel72spec(k, c1, c2):
-        f73 = 7/3
-        C = f73*np.sin(np.pi/f73)/np.pi
-
-        return c1*C*(1/c2)/(1 + (k/c2)**f73)
-
-    return fkamel72spec
+    f73 = 7/3
+    C = f73*np.sin(np.pi/f73)/np.pi
+    return np.cumsum(c1*C*(1/c2)/(1 + (k/c2)**f73)*np.gradient(k))
 
 
-def Couwvw_fit(k, Suiuik, func=kamel72spec, c1c2guess=(5e-4, 2)):
+def Couwvw_fit(k, Couw_Ogive, func=kaimel72spec, c1c2guess=(5e-4, 2)):
     """..."""
-    c1c2, _ = curve_fit(func, k, Suiuik, p0=c1c2guess, maxfev=10000)
-    ustar, k0 = c1c2
-    uwvw_model = kamel72spec(k, ustar, k0)
+    c1c2, _ = curve_fit(func, k, Couw_Ogive, p0=c1c2guess, maxfev=10000)
+    uwstar, k0 = c1c2
+    uw_model = kaimel72spec(k, uwstar, k0)
 
-    return uwvw_model, ustar, k0
+    return uw_model, uwstar, k0
 
 
 def calcvp(v, normalize=True):
