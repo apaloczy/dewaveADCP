@@ -3,6 +3,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from .VarianceFit import varfitw, sgwvar_func, calc_beta
 from .VerticalDetrend import dewave_verticaldetrend, fexp
+from .AdaptiveFiltering import bvar4AF
 from .utils import sind, cosd, fourfilt
 
 d2r = np.pi/180
@@ -167,6 +168,43 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True):
     return vw
 
 
+def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, averaged=True):
+    """
+    USAGE
+    -----
+    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, averaged=True)
+    """
+    # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
+    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=sep, Lw=Lw)
+    Sth, Cth = sind(theta), cosd(theta)
+    S2 = Sth**2
+
+    phi2, phi3 = phi2*d2r, phi3*d2r
+
+    # Calculate correction terms uv and ww from Earth velocities, if available.
+    if enu is not None:
+        u, v, w = enu
+        uv = u*v
+        ww = w*w
+    else:
+        ww = uv = b1var*0
+
+    b2mb1 = b2var - b1var
+    b2pb1 = b2var + b1var
+    b4mb3 = b4var - b3var
+    b4pb3 = b4var + b3var
+    coeff = 1/(2*sind(2*theta))
+
+    # Dewey & Stringer (2007)'s equations (32, 33).
+    uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
+    vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+
+    if averaged:
+        uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+
+    return uw, vw
+
+
 def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
@@ -235,7 +273,7 @@ def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
     return uw
 
 
-def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
+def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, **kw):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
@@ -278,19 +316,19 @@ def vwrs4_detrend(b3, b4, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1
                 b3bd[k,:] = fourfilt(b3k, dts, Tmax, Tmin)
                 b4bd[k,:] = fourfilt(b4k, dts, Tmax, Tmin)
             else: # Detrend only high-passed series to remove waves.
-                # b3hi[k,:] = fourfilt(b3k, dts, lowhi_Tcutoff, dts/2)
-                # b4hi[k,:] = fourfilt(b4k, dts, lowhi_Tcutoff, dts/2)
-                b3lo[k,:] = fourfilt(b3k, dts, nt*dts, lowhi_Tcutoff)
-                b4lo[k,:] = fourfilt(b4k, dts, nt*dts, lowhi_Tcutoff)
+                b3hi[k,:] = fourfilt(b3k, dts, lowhi_Tcutoff, dts/2)
+                b4hi[k,:] = fourfilt(b4k, dts, lowhi_Tcutoff, dts/2)
+                b3lo[k,:] = fourfilt(b3k, dts, nt*dts*2, lowhi_Tcutoff)
+                b4lo[k,:] = fourfilt(b4k, dts, nt*dts*2, lowhi_Tcutoff)
                 b3hi = dewave_verticaldetrend(b3hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
                 b4hi = dewave_verticaldetrend(b4hi, r, theta, phi2, phi3, dpoly=dpoly, detrend_time=detrend_time, **kw)
 
         if bandpass: # Subtract band-passed signal from total.
             b3 = b3 - b3bd
             b4 = b4 - b4bd
-        else: # Take only low-pass filtered part of the signal.
-            b3 = b3lo
-            b4 = b4lo
+        else: # Add back detrended high-passed signal.
+            b3 = b3lo + b3hi
+            b4 = b4lo + b4hi
 
 
     b3var, b4var = map(bvar, (b3, b4))
