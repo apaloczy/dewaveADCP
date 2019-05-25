@@ -3,7 +3,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from .VarianceFit import varfitw, sgwvar_func, calc_beta
 from .VerticalDetrend import dewave_verticaldetrend, fexp
-from .AdaptiveFiltering import bvar4AF
+from .AdaptiveFiltering import bvar4AF, bvar5AF
 from .utils import sind, cosd, fourfilt
 
 d2r = np.pi/180
@@ -20,7 +20,7 @@ def rstress5(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
     raise NotImplementedError
 
 
-def uwrs5(b1, b2, b5, uv, theta, phi2, phi3):
+def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -39,13 +39,19 @@ def uwrs5(b1, b2, b5, uv, theta, phi2, phi3):
     b2pb1 = b2var + b1var
     coeff = -1/(4*S6C2)
 
-    # Dewey & Stringer (2007)'s equation (133).
+    if uv is None:
+        uv = b1var*0
+
+    # Dewey & Stringer (2007)'s equation (132).
     uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S4C2*phi3*uv)
+
+    if averaged:
+        uw = np.nanmean(uw, axis=1)
 
     return uw
 
 
-def vwrs5(b3, b4, b5, uv, theta, phi2, phi3):
+def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -64,8 +70,14 @@ def vwrs5(b3, b4, b5, uv, theta, phi2, phi3):
     b4pb3 = b4var + b3var
     coeff = -1/(4*S6C2)
 
+    if uv is None:
+        uv = b1var*0
+
     # Dewey & Stringer (2007)'s equation (133).
     vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S4C2*phi3*uv)
+
+    if averaged:
+        vw = np.nanmean(vw, axis=1)
 
     return vw
 
@@ -80,6 +92,15 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3):
 
 def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3):
     raise NotImplementedError
+
+
+def tke5(b1, b2, b3, b4, b5, theta, phi2, phi3):
+    raise NotImplementedError
+
+
+def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3):
+    raise NotImplementedError
+
 
 ######################
 #### 4-beam Janus ####
@@ -198,6 +219,41 @@ def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, ave
     # Dewey & Stringer (2007)'s equations (32, 33).
     uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
     vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+
+    if averaged:
+        uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+
+    return uw, vw
+
+
+def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, averaged=True):
+    """
+    USAGE
+    -----
+    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, enu=None, averaged=True)
+    """
+    # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
+    b1var, b2var, b3var, b4var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw)
+    Sth, Cth = sind(theta), cosd(theta)
+    S2 = Sth**2
+
+    phi2, phi3 = phi2*d2r, phi3*d2r
+
+    # Calculate correction terms uv and ww from Earth velocities, if available.
+    if uv is not None:
+        uv = u*v
+    else:
+        uv = b1var*0
+
+    b2mb1 = b2var - b1var
+    b2pb1 = b2var + b1var
+    b4mb3 = b4var - b3var
+    b4pb3 = b4var + b3var
+    coeff = 1/(2*sind(2*theta))
+
+    # Dewey & Stringer (2007)'s equations (132, 133).
+    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S4C2*phi3*uv)
+    vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S4C2*phi3*uv)
 
     if averaged:
         uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
@@ -465,120 +521,6 @@ def vwrs4_varfit(b3, b4, r, theta, phi2, phi3, h, alpha, sep, enu=None, c1c2gues
     # Dewey & Stringer (2007)'s equation (33), divided by (1 + beta**2).
     # vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)/(1 + beta34**2)
     vw = -(coeff*b4mb3/(1 + beta34**2))
-
-    return vw
-
-
-def uwrs4_postvarfit(b1, b2, r, theta, phi2, phi3, enu=None, abcguess=(10, 0.3, 0.07)):
-    """
-    Calculates the <u'w'> component of the Reynolds stress tensor
-    from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
-    of (u, v, w) velocities in Earth coordinates, the correction terms <w'w'> and
-    <u'v'> are calculated and included in the calculation of <u'w'>. If 'enu' is
-    not provided, the correction terms are neglected (default).
-
-    The formula for the small-angle
-    approximation is used (D&S equation 32).
-    """
-    Sth, Cth = sind(theta), cosd(theta)
-    S2 = Sth**2
-
-    phi2, phi3 = phi2*d2r, phi3*d2r
-    b1var, b2var = map(bvar, (b1, b2))
-
-    # Calculate correction terms uv and ww from Earth velocities, if available.
-    if enu is not None:
-        raise NotImplementedError
-    else:
-        ww = uv = b1var*0
-
-    b2mb1 = b2var - b1var
-    b2pb1 = b2var + b1var
-    coeff = 1/(2*sind(2*theta))
-
-    # Dewey & Stringer (2007)'s equation (32).
-    uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
-
-    for n in range(phi2.size):
-        uwn = uw[:, n]
-        fnnan = np.isfinite(uwn)
-        fnan = ~fnnan
-        if fnnan.sum()<4:
-            Warning('Too many NaNs on beam variance profile. Skipping this profile')
-            uw[:, n] = np.nan
-            continue
-        try:
-            abc, _ = curve_fit(fexp, r[fnnan]*Cth, uwn[fnnan], p0=abcguess, maxfev=10000)
-        except RuntimeError:
-            Warning('Exponential fitting failed. Skipping this profile')
-            uw[:, n] = np.nan
-            continue
-
-        a, b, c = abc
-        # print(a,b,c)
-        uw = uw - fexp(r*Cth, a, b, c)[:, np.newaxis]
-        uwn[fnan] = np.nan
-        uw[:, n] = uwn
-
-    uw = np.nanmean(uw, axis=1)
-
-    return uw
-
-
-def vwrs4_postvarfit(b3, b4, r, theta, phi2, phi3, enu=None, abcguess=(10, 0.3, 0.07)):
-    """
-    Calculates the <u'w'> component of the Reynolds stress tensor
-    from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
-    of (u, v, w) velocities in Earth coordinates, the correction terms <w'w'> and
-    <u'v'> are calculated and included in the calculation of <v'w'>. If 'enu' is
-    not provided, the correction terms are neglected (default).
-
-    The formula for the small-angle
-    approximation is used (D&S equation 33).
-    """
-    Sth, Cth = sind(theta), cosd(theta)
-    S2 = Sth**2
-
-    phi2, phi3 = phi2*d2r, phi3*d2r
-    b3var, b4var = map(bvar, (b3, b4))
-
-    # Calculate correction terms uv and ww from Earth velocities, if available.
-    if enu is not None:
-        u, v, w = enu
-        uv = u*v
-        ww = w*w
-    else:
-        ww = uv = b3var*0
-
-    b4mb3 = b4var - b3var
-    b4pb3 = b4var + b3var
-    coeff = 1/(2*sind(2*theta))
-
-    # Dewey & Stringer (2007)'s equation (33).
-    vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
-
-    for n in range(phi2.size):
-        vwn = vw[:, n]
-        fnnan = np.isfinite(vwn)
-        fnan = ~fnnan
-        if fnnan.sum()<4:
-            Warning('Too many NaNs on beam variance profile. Skipping this profile')
-            vw[:, n] = np.nan
-            continue
-        try:
-            abc, _ = curve_fit(fexp, r[fnnan]*Cth, vwn[fnnan], p0=abcguess, maxfev=10000)
-        except RuntimeError:
-            Warning('Exponential fitting failed. Skipping this profile')
-            vw[:, n] = np.nan
-            continue
-
-        a, b, c = abc
-        # print(a,b,c)
-        vw = vw - fexp(r*Cth, a, b, c)[:, np.newaxis]
-        vwn[fnan] = np.nan
-        vw[:, n] = vwn
-
-    vw = np.nanmean(vw, axis=1)
 
     return vw
 
