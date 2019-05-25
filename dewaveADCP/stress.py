@@ -189,11 +189,11 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True):
     return vw
 
 
-def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, averaged=True):
+def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, tilt_corr=True, averaged=True):
     """
     USAGE
     -----
-    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, averaged=True)
+    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, tilt_corr=True, averaged=True)
     """
     # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
     b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=sep, Lw=Lw)
@@ -217,8 +217,12 @@ def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, ave
     coeff = 1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equations (32, 33).
-    uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
-    vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+    if tilt_corr:
+        uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
+        vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+    else:
+        uw = -coeff*b2mb1
+        vw = -coeff*b4mb3
 
     if averaged:
         uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
