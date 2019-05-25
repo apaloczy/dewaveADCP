@@ -49,7 +49,7 @@ def bvar4AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128):
     return b1var, b2var, b3var, b4var
 
 
-def bvar5AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128):
+def bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128):
     """
     USAGE
     -----

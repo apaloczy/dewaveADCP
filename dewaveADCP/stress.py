@@ -230,26 +230,26 @@ def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, 
     """
     USAGE
     -----
-    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, enu=None, averaged=True)
+    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, uv=None, averaged=True)
     """
     # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
-    b1var, b2var, b3var, b4var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw)
+    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw)
     Sth, Cth = sind(theta), cosd(theta)
-    S2 = Sth**2
+    S6C2 = (Sth**6)*(Cth**2)
+    S5C1 = (Sth**5)*(Cth)
+    S4C2 = (Sth**4)*(Cth**2)
 
     phi2, phi3 = phi2*d2r, phi3*d2r
 
     # Calculate correction terms uv and ww from Earth velocities, if available.
-    if uv is not None:
-        uv = u*v
-    else:
+    if uv is None:
         uv = b1var*0
 
     b2mb1 = b2var - b1var
     b2pb1 = b2var + b1var
     b4mb3 = b4var - b3var
     b4pb3 = b4var + b3var
-    coeff = 1/(2*sind(2*theta))
+    coeff = -1/(4*S6C2)
 
     # Dewey & Stringer (2007)'s equations (132, 133).
     uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S4C2*phi3*uv)
