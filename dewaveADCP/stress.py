@@ -1,6 +1,7 @@
 # Functions for calculating velocity covariances (Reynolds stresses) from a moored ADCP.
 import numpy as np
 from scipy.optimize import curve_fit
+from xarray import DataArray
 from .VarianceFit import varfitw, sgwvar_func, calc_beta
 from .VerticalDetrend import dewave_verticaldetrend, fexp
 from .AdaptiveFiltering import bvar4AF, bvar5AF
@@ -20,7 +21,7 @@ def rstress5(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
     raise NotImplementedError
 
 
-def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True):
+def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -43,15 +44,22 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True):
         uv = b1var*0
 
     # Dewey & Stringer (2007)'s equation (132).
-    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S4C2*phi3*uv)
+    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
 
     if averaged:
-        uw = np.nanmean(uw, axis=1)
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            uw = DataArray(uw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            uw = np.nanmean(uw, axis=1)
 
     return uw
 
 
-def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True):
+def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -71,13 +79,20 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True):
     coeff = -1/(4*S6C2)
 
     if uv is None:
-        uv = b1var*0
+        uv = b3var*0
 
     # Dewey & Stringer (2007)'s equation (133).
     vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S4C2*phi3*uv)
 
     if averaged:
-        vw = np.nanmean(vw, axis=1)
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            vw = DataArray(vw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            vw = np.nanmean(vw, axis=1)
 
     return vw
 
@@ -115,7 +130,7 @@ def rstress4(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
     raise NotImplementedError
 
 
-def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True):
+def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
@@ -148,12 +163,19 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True):
     uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
 
     if averaged:
-        uw = np.nanmean(uw, axis=1)
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            uw = DataArray(uw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+            vw = DataArray(vw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
 
     return uw
 
 
-def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True):
+def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
@@ -184,19 +206,26 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True):
     vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
 
     if averaged:
-        vw = np.nanmean(vw, axis=1)
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            uw = DataArray(uw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+            vw = DataArray(vw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
 
     return vw
 
 
-def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, tilt_corr=True, averaged=True):
+def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw):
     """
     USAGE
     -----
-    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, tilt_corr=True, averaged=True)
+    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw)
     """
     # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
-    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=sep, Lw=Lw)
+    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=sep, Lw=Lw, **kw)
     Sth, Cth = sind(theta), cosd(theta)
     S2 = Sth**2
 
@@ -225,19 +254,24 @@ def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, til
         vw = -coeff*b4mb3
 
     if averaged:
-        uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+        if enslen is not None:
+            uw, vw, tens = avgensuwvw(uw, vw, t, enslen)
+            return uw, vw, tens
+        else:
+            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+            return uw, vw
+    else:
+        return uw, vw
 
-    return uw, vw
 
-
-def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, averaged=True):
+def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw):
     """
     USAGE
     -----
-    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, uv=None, averaged=True)
+    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw)
     """
     # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
-    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw)
+    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw, **kw)
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -245,7 +279,7 @@ def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, 
 
     phi2, phi3 = phi2*d2r, phi3*d2r
 
-    # Calculate correction terms uv and ww from Earth velocities, if available.
+    # Calculate correction term uv from Earth velocities, if available.
     if uv is None:
         uv = b1var*0
 
@@ -253,16 +287,26 @@ def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, 
     b2pb1 = b2var + b1var
     b4mb3 = b4var - b3var
     b4pb3 = b4var + b3var
-    coeff = -1/(4*S6C2)
 
     # Dewey & Stringer (2007)'s equations (132, 133).
-    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S4C2*phi3*uv)
-    vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S4C2*phi3*uv)
+    if tilt_corr:
+        coeff = -1/(4*S6C2)
+        uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
+        vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S4C2*phi3*uv)
+    else: # Same as 4-beam Janus case.
+        coeff = 1/(2*sind(2*theta))
+        uw = -coeff*b2mb1
+        vw = -coeff*b4mb3
 
     if averaged:
-        uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
-
-    return uw, vw
+        if enslen is not None:
+            uw, vw, tens = avgensuwvw(uw, vw, t, enslen)
+            return uw, vw, tens
+        else:
+            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+            return uw, vw
+    else:
+        return uw, vw
 
 
 def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
@@ -541,30 +585,54 @@ def bvar(b):
     return (b - np.nanmean(b, axis=1)[:, np.newaxis])**2
 
 
+def avgensuwvw(uw, vw, t, enslen, verbose=True):
+    """
+    Averages arrays 'uw' and 'vw' of shape (z,t) in
+    ensembles of 'enslen' pings each.
+    """
+    nz, nt = uw.shape
+    nens = int(nt//enslen)
+
+    uwens = np.empty((nz, nens))*np.nan
+    vwens = uwens.copy()
+    tens = np.array([])
+
+    il = 0
+    ir = enslen
+    for n in range(nens):
+        if verbose:
+            print("Ensemble ",n+1," / ",nens)
+
+        uwens[:, n] = np.nanmean(uw[:,il:ir], axis=1)
+        vwens[:, n] = np.nanmean(vw[:,il:ir], axis=1)
+        tens = np.append(tens, t[(il+ir)//2])
+
+        il = ir
+        ir += enslen
+        if ir>nt: # Last ensemble might have less pings than the others.
+            ir = nt
+
+    return uwens, vwens, tens
+
+
 def rot_uwvw(uw, vw, phi1):
     """
     Rotates the vector of vertical transport of horizontal momentum (uw + i*vw)
     to Earth coordinates (vertical transport of *eastward* and *meridional* momentum).
     """
-    Sphi1, Cphi1 = sind(phi), cosd(phi1)
-    R11, R12 = +u*Cphi1, +v*Sphi1
-    R21, R22 = -u*Sphi1, +v*Cphi1
-
-    R11, R12 = R11[np.newaxis, np.newaxis, :], R12[np.newaxis, np.newaxis, :]
-    R21, R22 = R21[np.newaxis, np.newaxis, :], R22[np.newaxis, np.newaxis, :]
-
-    # Time-dependent rotation matrix.
-    R = np.matrix([[R11, R12],
-                   [R21, R22]])
+    Sphi1, Cphi1 = sind(phi1), cosd(phi1)
+    R11, R12 = +Cphi1, +Sphi1
+    R21, R22 = -Sphi1, +Cphi1
 
     nz, nt = uw.shape
     uwrot = uw*np.nan
     vwrot = vw*np.nan
     for n in range(nt):
-        Rn = R[..., n]
-        for k in range(nz):
-            uwvw = np.matmul(Rn, np.matrix([uw[:, n], vw[:, n]]).T) # 2x1 vector on LHS.
-            uwrot[:, n] = uwvwr[0]
-            vwrot[:, n] = uwvwr[1]
+        # Time-dependent rotation matrix.
+        Rn = np.matrix([[R11[n], R12[n]],
+                        [R21[n], R22[n]]])
+        uwvwr = np.matmul(Rn, np.matrix([uw[:, n], vw[:, n]])) # 2 x nbins vector on RHS.
+        uwrot[:, n] = uwvwr[0, :]
+        vwrot[:, n] = uwvwr[1, :]
 
     return uwrot, vwrot
