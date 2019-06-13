@@ -228,15 +228,12 @@ def calcepsilon(DLL, rx23, CV2=2.0, method='scannell_etal2017', ret_fitcovs=Fals
         polydeg = 3 # A3*r23**(3) + A2*r23**(2) + A1*r23**(1) + A0 = DLL(r^[2/3]), or
                     # A3*r**(2) + A2*r**(4/3) + A1*r**(1) + A0 = DLL(r)
                     # A3*WAVES + ... + A1*TURBULENCE + INSTRUMENT NOISE = DLL(r).
-    elif method=='standard': # A1*r23**(1) + A0 = DLL(r23)
+    elif method=='traditional': # A1*r23**(1) + A0 = DLL(r23)
         polydeg = 1
 
     # define arrays to hold values.
     coeffs = np.empty((nbeams, nbins, nepochs, polydeg + 1))*np.nan
     corrs = np.empty((nbeams, nbins, nepochs))*np.nan # Magnitudes of corr coeffs of polynomial fits.
-
-    # Progress bar
-    # h = waitbar(0,'Regression analysis')
 
     # regression analysis has to be done for each beam / bin / epoch separately.
     for ibm in range(nbeams):
