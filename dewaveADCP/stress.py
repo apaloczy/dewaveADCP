@@ -168,9 +168,8 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=Non
             dims = ('z', 't')
             coords = dict(z=z, t=t)
             uw = DataArray(uw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
-            vw = DataArray(vw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
         else:
-            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+            uw = np.nanmean(uw, axis=1)
 
     return uw
 
@@ -210,10 +209,9 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=Non
             assert z is not None, "Need z for ensemble averaging."
             dims = ('z', 't')
             coords = dict(z=z, t=t)
-            uw = DataArray(uw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
             vw = DataArray(vw, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
         else:
-            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
+            vw = np.nanmean(vw, axis=1)
 
     return vw
 
