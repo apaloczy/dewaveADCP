@@ -618,19 +618,11 @@ def rot_uwvw(uw, vw, phi1):
     Rotates the vector of vertical transport of horizontal momentum (uw + i*vw)
     to Earth coordinates (vertical transport of *eastward* and *meridional* momentum).
     """
-    Sphi1, Cphi1 = sind(phi1), cosd(phi1)
-    R11, R12 = +Cphi1, +Sphi1
-    R21, R22 = -Sphi1, +Cphi1
+    Sphi1, Cphi1 = sind(phi1)[np.newaxis,...], cosd(phi1)[np.newaxis,...]
+    uwr = uw*np.nan
+    vwr = uwr.copy()
 
-    nz, nt = uw.shape
-    uwrot = uw*np.nan
-    vwrot = vw*np.nan
-    for n in range(nt):
-        # Time-dependent rotation matrix.
-        Rn = np.matrix([[R11[n], R12[n]],
-                        [R21[n], R22[n]]])
-        uwvwr = np.matmul(Rn, np.matrix([uw[:, n], vw[:, n]])) # 2 x nbins vector on RHS.
-        uwrot[:, n] = uwvwr[0, :]
-        vwrot[:, n] = uwvwr[1, :]
+    uwr = +uw*Cphi1 + vw*Sphi1
+    vwr = -uw*Sphi1 + vw*Cphi1
 
-    return uwrot, vwrot
+    return uwr, vwr
