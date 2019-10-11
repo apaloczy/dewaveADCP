@@ -25,24 +25,25 @@ def bvar4AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=Fa
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad0 = np.isnan(ub2)
+            fbad01 = np.isnan(ub1)
+            fbad02 = np.isnan(ub2)
             ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
             ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
 
-            # Drop remaining NaNs after interpolating.
-            fbad = np.isnan(ub2)
-            if verbose:
-                print("Interpolated over %d NaNs."%(fbad0.sum()-fbad.sum()))
+            # Clip remaining NaNs after interpolating.
+            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
             ub1 = ub1[~fbad]
             ub2 = ub2[~fbad]
             ntt = ub2.size
-            if (fbad0.sum()/nt)>max_badfrac:
+            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
                 if verbose:
                     print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
                 continue
             else:
                 if verbose:
-                    print("Removed %d NaNs."%fbad.sum())
+                    nfbad = fbad.sum()
+                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
+                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
 
             # Make windowed data matrix A from velocities at bin 2.
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
@@ -93,24 +94,25 @@ def bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbos
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad0 = np.isnan(ub2)
+            fbad01 = np.isnan(ub1)
+            fbad02 = np.isnan(ub2)
             ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
             ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
 
-            # Drop remaining NaNs after interpolating.
-            fbad = np.isnan(ub2)
-            if verbose:
-                print("Interpolated over %d NaNs."%(fbad0.sum()-fbad.sum()))
+            # Clip remaining NaNs after interpolating.
+            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
             ub1 = ub1[~fbad]
             ub2 = ub2[~fbad]
             ntt = ub2.size
-            if (fbad0.sum()/nt)>max_badfrac:
+            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
                 if verbose:
                     print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
                 continue
             else:
                 if verbose:
-                    print("Removed %d NaNs."%fbad.sum())
+                    nfbad = fbad.sum()
+                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
+                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
 
             # Make windowed data matrix A from velocities at bin 2.
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
