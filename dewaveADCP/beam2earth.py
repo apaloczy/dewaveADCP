@@ -29,8 +29,8 @@ def janus2xyz(b1, b2, b3, b4, theta, r=None, binmaptype='linear', ptch=None, rol
     b1, b2 = b1[..., np.newaxis], b2[..., np.newaxis]
     b3, b4 = b3[..., np.newaxis], b4[..., np.newaxis]
     B = np.dstack((b1, b2, b3, b4))
-    uvfac = 1/(2*sind(theta))
-    wfac = 1/(4*cosd(theta)) # For w derived from beams 1-4.
+    uvfac = 1/(2*np.sin(theta))
+    wfac = 1/(4*np.cos(theta)) # For w derived from beams 1-4.
 
     # 3rd row: w from the average of the 4 Janus beams.
     #               b1  b2  b3  b4
@@ -225,8 +225,8 @@ def janus2xyz5(b1, b2, b3, b4, b5, theta, binmaptype='linear', use3beamsol=True,
     b3, b4 = b3[..., np.newaxis], b4[..., np.newaxis]
     b5 = b5[..., np.newaxis]
     B = np.dstack((b1, b2, b3, b4, b5))
-    uvfac = 1/(2*sind(theta))
-    wfac = 1/(4*cosd(theta)) # For w derived from beams 1-4.
+    uvfac = 1/(2*np.sin(theta))
+    wfac = 1/(4*np.cos(theta)) # For w derived from beams 1-4.
 
     # 3rd row: w from the average of the 4 Janus beams.
     #               b1  b2  b3  b4  b5
