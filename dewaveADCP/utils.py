@@ -192,6 +192,14 @@ def near(x, x0, npts=1, return_index=False):
         return xnear
 
 
+def nearfl(x, x0):
+    """
+    Get the lowest index of the two points in
+    vector x that bound the number x0.
+    """
+    return np.min(near(x, x0, npts=2, return_index=True))
+
+
 d2r = np.pi/180
 def sind(ang):
     return np.sin(ang*d2r)
