@@ -2,6 +2,7 @@
 # Direct translation of functions in the 'ADCPtools' MATLAB
 # package (https://github.com/apaloczy/ADCPtools).
 import numpy as np
+from scipy.interpolate import interp1d
 from .utils import sind, cosd, near, nearfl
 
 
@@ -21,7 +22,7 @@ def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=No
         assert r is not None, "Must provide r if using bin-mapping."
         assert ptch is not None, "Must provide pitch if using bin-mapping."
         assert roll is not None, "Must provide roll if using bin-mapping."
-        print('Mapping beams to horizontal planes using *%s* interpolation.'%binmaptype)
+        print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
         b1, b2, b3, b4 = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how=binmaptype)
     else:
         print('Bin-mapping NOT applied.')
@@ -217,7 +218,7 @@ def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmapty
         assert r is not None, "Must provide r if using bin-mapping."
         assert ptch is not None, "Must provide pitch if using bin-mapping."
         assert roll is not None, "Must provide roll if using bin-mapping."
-        print('Mapping beams to horizontal planes using *%s* interpolation.'%binmaptype)
+        print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
         b1, b2, b3, b4, b5 = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how=binmaptype)
     else:
         print('Bin-mapping NOT applied.')
@@ -416,11 +417,12 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
     return u, v, w, w5
 
 
+
 def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
     """
     USAGE
     -----
-    b1m, b2m, b3m, b4m = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear')
+    b1m, b2m, b3m, b4m = binmap5(b1, b2, b3, b4, r, theta, ptch, roll, how='linear')
 
     theta, ptch and roll must be in RADIANS.
 
@@ -436,18 +438,9 @@ def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
     Cph3 = np.cos(roll)
 
     Z = r*Cth
-    Zbot = Z[0]
-    Ztop = Z[-1]
-    z00 = np.matrix([0, 0, 1]).T
+    z00 = np.matrix([0, 0, -1]).T
 
     nz, nt = b1.shape
-    PR = np.empty((3, 3, nt))
-    for k in range(nt):
-      PRk = np.array([[Cph3[k],             0,     Sph3[k]],
-                      [Sph2[k]*Sph3[k],  Cph2[k], -Sph2[k]*Cph3[k]],
-                      [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
-      PR[:,:,k] = PRk
-
                #      b1     b2     b3     b4
     E = np.matrix([[-Sth,  +Sth,    0,     0],
                    [ 0,      0,   -Sth,  +Sth],
@@ -456,48 +449,22 @@ def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
     Bo = np.dstack((b1[..., np.newaxis], b2[..., np.newaxis], b3[..., np.newaxis], b4[..., np.newaxis]))
 
     for i in range(4):
-      Ei = E[:,i]
+        Ei = E[:,i]
 
-      Boi = Bo[:,:,i] # z, t, bi.
-      bmi = Boi
+        Boi = Bo[:,:,i] # z, t, bi.
+        bmi = Boi.copy()
 
-      for k in range(nt):
-        zi = np.array(np.abs((np.matrix(PR[:,:,k])*Ei).T*z00)*r)[0] # Actual bin height, dot product of tilt matrix with along-beam distance vector.
+        for k in range(nt):
+            PR = np.array([[Cph3[k],             0,     Sph3[k]],
+                           [Sph2[k]*Sph3[k],  Cph2[k], -Sph2[k]*Cph3[k]],
+                           [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
-        # Check whether bins are lower than bottom or higher than top.
-        nbot = 0
-        ntop = nz
-        zlo = zi<Zbot
-        zhi = zi>Ztop
-        if zlo.any():
-          ntop = nz - zlo.sum()
+            zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate")(Z)
 
-        if zhi.any():
-          nbot = zhi.sum()
+        Bo[:,:,i] = bmi
 
-        boi = Boi[:,k]
-
-        for J in range(nbot, ntop):
-          Zj = Z[J]
-          if how=='linear':                 # Linear interpolation.
-            j = nearfl(zi, Zj)
-            jj = j + 1
-            zij = zi[j]
-            zijj = zi[jj]
-            dzj = zijj - zij
-            bmi[J,k] = ((Zj - zij)/dzj)*boi[j] + ((zijj - Zj)/dzj)*boi[jj]
-          elif how=='nn':                         # Nearest-neighbor interpolation.
-            j = near(zi, Zj, return_index=True)
-            bmi[J,k] = boi[j]
-
-      Bo[:,:,i] = bmi
-
-    b1m = Bo[:,:,0]
-    b2m = Bo[:,:,1]
-    b3m = Bo[:,:,2]
-    b4m = Bo[:,:,3]
-
-    return b1m, b2m, b3m, b4m
+    return Bo[:,:,0], Bo[:,:,1], Bo[:,:,2], Bo[:,:,3]
 
 
 def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
@@ -520,18 +487,9 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
     Cph3 = np.cos(roll)
 
     Z = r*Cth
-    Zbot = Z[0]
-    Ztop = Z[-1]
-    z00 = np.matrix([0, 0, 1]).T
+    z00 = np.matrix([0, 0, -1]).T
 
     nz, nt = b1.shape
-    PR = np.empty((3, 3, nt))
-    for k in range(nt):
-      PRk = np.array([[Cph3[k],             0,     Sph3[k]],
-                      [Sph2[k]*Sph3[k],  Cph2[k], -Sph2[k]*Cph3[k]],
-                      [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
-      PR[:,:,k] = PRk
-
                #      b1     b2     b3     b4   b5
     E = np.matrix([[-Sth,  +Sth,    0,     0,   0],
                    [ 0,      0,   -Sth,  +Sth,  0],
@@ -540,49 +498,22 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
     Bo = np.dstack((b1[..., np.newaxis], b2[..., np.newaxis], b3[..., np.newaxis], b4[..., np.newaxis], b5[..., np.newaxis]))
 
     for i in range(5):
-      Ei = E[:,i]
+        Ei = E[:,i]
 
-      Boi = Bo[:,:,i] # z, t, bi.
-      bmi = Boi
+        Boi = Bo[:,:,i] # z, t, bi.
+        bmi = Boi.copy()
 
-      for k in range(nt):
-        zi = np.array(np.abs((np.matrix(PR[:,:,k])*Ei).T*z00)*r)[0] # Actual bin height, dot product of tilt matrix with along-beam distance vector.
+        for k in range(nt):
+            PR = np.array([[Cph3[k],             0,     Sph3[k]],
+                            [Sph2[k]*Sph3[k],  Cph2[k], -Sph2[k]*Cph3[k]],
+                            [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
-        # Check whether bins are lower than bottom or higher than top.
-        nbot = 0
-        ntop = nz
-        zlo = zi<Zbot
-        zhi = zi>Ztop
-        if zlo.any():
-          ntop = nz - zlo.sum()
-
-        if zhi.any():
-          nbot = zhi.sum()
-
-        boi = Boi[:,k]
-
-        for J in range(nbot, ntop):
-          Zj = Z[J]
-          if how=='linear':                 # Linear interpolation.
-            j = nearfl(zi, Zj)
-            jj = j + 1
-            zij = zi[j]
-            zijj = zi[jj]
-            dzj = zijj - zij
-            bmi[J,k] = ((Zj - zij)/dzj)*boi[j] + ((zijj - Zj)/dzj)*boi[jj]
-          elif how=='nn':                         # Nearest-neighbor interpolation.
-            j = near(zi, Zj, return_index=True)
-            bmi[J,k] = boi[j]
+            zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate")(Z)
 
         Bo[:,:,i] = bmi
 
-    b1m = Bo[:,:,0]
-    b2m = Bo[:,:,1]
-    b3m = Bo[:,:,2]
-    b4m = Bo[:,:,3]
-    b5m = Bo[:,:,4]
-
-    return b1m, b2m, b3m, b4m, b5m
+    return Bo[:,:,0], Bo[:,:,1], Bo[:,:,2], Bo[:,:,3], Bo[:,:,4]
 
 
 def janus3beamsol(b1, b2, b3, b4):
