@@ -460,7 +460,7 @@ def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
                            [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
             zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
-            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate")(Z)
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate", assume_sorted=True)(Z)
 
         Bo[:,:,i] = bmi
 
@@ -509,7 +509,7 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
                             [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
             zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
-            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate")(Z)
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate", assume_sorted=True)(Z)
 
         Bo[:,:,i] = bmi
 
