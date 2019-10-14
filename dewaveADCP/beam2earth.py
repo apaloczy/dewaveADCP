@@ -82,7 +82,7 @@ def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, 
      * Clockwise PITCH (tilt about x-AXIS): POSITIVE (beam 3 higher than beam 4)
      * Clockwise ROLL (tilt about y-AXIS):  POSITIVE (beam 2 higher than beam 1)
 
-     * Heading increases COUNTER-CLOCKWISE from the *Y-AXIS*.
+     * Heading increases CLOCKWISE from the *Y-AXIS*.
 
            ^ positive y axis, psi = 0
            |
@@ -90,7 +90,7 @@ def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, 
            |
            |
            |
-     2 --- O --- 1 ---> positive x axis, psi = -90
+     2 --- O --- 1 ---> positive x axis, psi = +90
            |
            |
            |
@@ -281,7 +281,7 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
      * Clockwise PITCH (tilt about x-AXIS): POSITIVE (beam 3 higher than beam 4)
      * Clockwise ROLL (tilt about y-AXIS):  POSITIVE (beam 2 higher than beam 1)
 
-     * Heading increases COUNTER-CLOCKWISE from the *Y-AXIS*.
+     * Heading increases CLOCKWISE from the *Y-AXIS*.
 
            ^ positive y axis, psi = 0
            |
@@ -289,7 +289,7 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
            |
            |
            |
-     2 --- O --- 1 ---> positive x axis, psi = -90
+     2 --- O --- 1 ---> positive x axis, psi = +90
            |
            |
            |
