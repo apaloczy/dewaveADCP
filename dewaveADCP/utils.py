@@ -89,10 +89,10 @@ def fourfilt(x, dts, Tmax, Tmin):
     # Translated to Python by André Palóczy.
     #############################
     npts = x.size
-    # if npts%2==0: # N is even.
-    nby2 = npts//2
-    # else:
-        # nby2 = (npts-1)//2
+    if npts%2==0: # N is even.
+        nby2 = npts//2
+    else:
+        nby2 = (npts-1)//2
 
     tfund = npts*dts
     ffund = 1.0/tfund
@@ -103,14 +103,14 @@ def fourfilt(x, dts, Tmax, Tmin):
 
     # Filter coefficients.
     f = ffund
-    for i in range(1, nby2+2):
+    for i in range(0, nby2+2):
         t = 1.0/f
         if np.logical_or(t>Tmax, t<Tmin):
             coeffs[i] = coeffs[i]*0
         f += ffund
 
     # Calculate the remaining coefficients.
-    for i in range(1, nby2+1):
+    for i in range(1, nby2+2):
         coeffs[npts-i] = coeffs[i].conj()
 
     # Back-transform data and take real part.
