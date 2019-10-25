@@ -205,12 +205,43 @@ def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
     return ww
 
 
-def tke5(b1, b2, b3, b4, b5, theta, phi2, phi3):
-    raise NotImplementedError
+def tke5(b1, b2, b3, b4, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
+    """
+    Calculates the turbulent kinetic energy q^2/2
+    from the along-beam velocities b1, b2, b3, b4 and b5.
+
+    The formula for the small-angle
+    approximation is used (D&S equation 134).
+    """
+    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    Sth, Cth = sind(theta), cosd(theta)
+    S2 = Sth**2
+    C2 = Cth**2
+    cotth = Cth/Sth
+
+    phi3 = phi3*d2r
+    b2mb1 = b2var - b1var
+    b1234 = b1var + b2var + b3var + b4var
+    coeff = 1/(4*S2)
+
+    # D&S Equation 134.
+    q2 = coeff*(b1234 - 2*(2*C2 - S2)*b5var - (cotth - 1)*phi3*b2mb1) # q^2/2, not q^2.
+
+    if averaged:
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            q2 = DataArray(q2, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            q2 = np.nanmean(q2, axis=1)
+
+    return q2
 
 
-def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3):
-    raise NotImplementedError
+def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+    return alpha
 
 
 ######################
