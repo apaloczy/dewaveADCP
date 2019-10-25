@@ -97,16 +97,112 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
     return vw
 
 
-def uurs5(b1, b2, b5, theta, phi3):
-    raise NotImplementedError
+def uurs5(b1, b2, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
+    """
+    Calculates the <u'u'> component of the Reynolds stress tensor
+    from the along-beam velocities b1, b2, b5.
+
+    The formula for the small-angle
+    approximation is used (D&S equation 129).
+    """
+    b1var, b2var, b5var = map(bvar, (b1, b2, b5))
+    Sth, Cth = sind(theta), cosd(theta)
+    S6C2 = (Sth**6)*(Cth**2)
+    S5C1 = (Sth**5)*(Cth)
+    S4C2 = (Sth**4)*(Cth**2)
+    C2 = Cth**2
+
+    phi3 = phi3*d2r
+    b2mb1 = b2var - b1var
+    b2pb1 = b2var + b1var
+    coeff = -1/(4*S6C2)
+
+    # D&S Equation 129.
+    uu = coeff*(-2*S4C2*(b2pb1 - 2*C2*b5var) + 2*S5C1*phi3*b2mb1)
+
+    if averaged:
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            uu = DataArray(uu, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            uu = np.nanmean(uu, axis=1)
+
+    return uu
 
 
-def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3):
-    raise NotImplementedError
+def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+    """
+    Calculates the <v'v'> component of the Reynolds stress tensor
+    from the along-beam velocities b1, b2, b3, b4 and b5.
+
+    The formula for the small-angle
+    approximation is used (D&S equation 130).
+    """
+    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    Sth, Cth = sind(theta), cosd(theta)
+    S6C2 = (Sth**6)*(Cth**2)
+    S5C1 = (Sth**5)*(Cth)
+    S3C3 = (Sth*Cth)**3
+    S4C2 = (Sth**4)*(Cth**2)
+    C2 = Cth**2
+
+    phi2, phi3 = phi2*d2r, phi3*d2r
+    b2mb1 = b2var - b1var
+    b4mb3 = b4var - b3var
+    b4pb3 = b4var + b3var
+    coeff = -1/(4*S6C2)
+
+    # D&S Equation 130.
+    vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var) - S4C2*phi3*b2mb1 + 2*S3C3*phi3*b2mb1 - 2*S5C1*phi2*b4mb3)
+
+    if averaged:
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            vv = DataArray(vv, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            vv = np.nanmean(vv, axis=1)
+
+    return vv
 
 
-def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3):
-    raise NotImplementedError
+def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+    """
+    Calculates the <w'w'> component of the Reynolds stress tensor
+    from the along-beam velocities b1, b2, b3, b4 and b5.
+
+    The formula for the small-angle
+    approximation is used (D&S equation 131).
+    """
+    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    Sth, Cth = sind(theta), cosd(theta)
+    S6C2 = (Sth**6)*(Cth**2)
+    S5C1 = (Sth**5)*(Cth)
+
+    phi2, phi3 = phi2*d2r, phi3*d2r
+    b2mb1 = b2var - b1var
+    b4mb3 = b4var - b3var
+    coeff = -1/(4*S6C2)
+
+    # D&S Equation 131.
+    ww = coeff*(-2*S5C1*phi3*b2mb1 + 2*S5C1*phi2*b4mb3 - 4*S6C2*b5var)
+
+    if averaged:
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            ww = DataArray(ww, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            ww = np.nanmean(ww, axis=1)
+
+    return ww
 
 
 def tke5(b1, b2, b3, b4, b5, theta, phi2, phi3):
