@@ -241,6 +241,41 @@ def tke5(b1, b2, b3, b4, b5, theta, phi3, averaged=True, enslen=None, z=None, t=
 
 
 def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+    """
+    Calculates the anisotropy ratio alpha
+    from the along-beam velocities b1, b2, b3, b4 and b5.
+
+    The formula for the small-angle
+    approximation is used (D&S equation 135).
+    """
+    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    Sth, Cth = sind(theta), cosd(theta)
+    S2 = Sth**2
+    C2 = Cth**2
+    csc2th = 1/sind(2*theta)
+    cotth = Cth/Sth
+
+    phi2, phi3 = phi2*d2r, phi3*d2r
+    b2mb1 = b2var - b1var
+    b4mb3 = b4var - b3var
+    b1234 = b1var + b2var + b3var + b4var
+    Fth = cotth*phi2*b4mb3 + (1 - 2*csc2th)*phi3*b2mb1
+
+    # D&S Equation 135.
+    num = 2*S2*b5var + cotth*phi3*b2mb1 - cotth*phi2*b4mb3
+    den = b1234 - 4*C2*b5var + Fth
+    alpha = num/den
+
+    if averaged:
+        if enslen is not None:
+            assert z is not None, "Need z for ensemble averaging."
+            assert t is not None, "Need t for ensemble averaging."
+            dims = ('z', 't')
+            coords = dict(z=z, t=t)
+            alpha = DataArray(alpha, coords=coords, dims=dims).resample(dict(t=enslen)).reduce(np.nanmean, dim='t')
+        else:
+            alpha = np.nanmean(alpha, axis=1)
+
     return alpha
 
 
