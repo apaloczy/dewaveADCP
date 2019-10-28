@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit
 from xarray import DataArray
 from .VarianceFit import varfitw, sgwvar_func, calc_beta
 from .VerticalDetrend import dewave_verticaldetrend, fexp
-from .AdaptiveFiltering import bvar4AF, bvar5AF
+from .AdaptiveFiltering import bvar4AF, bvar5AF, bvel5AF
 from .utils import sind, cosd, fourfilt
 
 d2r = np.pi/180
@@ -13,12 +13,35 @@ d2r = np.pi/180
 #### 5-beam Janus ####
 ######################
 
-def rstress5(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
+def rstress5(b1, b2, b3, b4, b5, theta, phi2, phi3, dewave=True,
+             uv=None, averaged=True, enslen=None, z=None, t=None, **kw):
     """
-    Calculate components of the Reynolds stress tensor
-    from along-beam velocities measured with a 4-beam Janus ADCP.
+    USAGE
+    -----
+    uw, vw, uu, vv, ww, tke, aniso = rstress5(b1, b2, b3, b4, b5, theta, phi2, phi3, dewave=True,
+                                              uv=None, averaged=True, enslen=None, z=None, t=None,
+                                              sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+
+    Calculate components of the Reynolds stress tensor, the turbulent kinetic energy and the anisotropy ratio
+    from along-beam velocities measured with a 5-beam Janus ADCP.
+
+    If 'dewave' is set to True (default), uses the Adaptive Filtering Method to filter out the surface
+    gravity wave signal from beam velocities prior to calculating the stresses.
     """
-    raise NotImplementedError
+    if dewave:
+        assert t is not None, "Need t for de-waving."
+        b1, b2, b3, b4, b5 = bvel5AF(b1, b2, b3, b4, b5, t, theta, **kw)
+
+    kwens = dict(averaged=averaged, enslen=enslen, z=z, t=t)
+    uw = uwrs5(b1, b2, b5, theta, phi2, phi3, uv=uv, **kwens)
+    vw = vwrs5(b3, b4, b5, theta, phi2, phi3, uv=uv, **kwens)
+    uu = uurs5(b1, b2, b5, theta, phi3, **kwens)
+    vv = vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
+    ww = wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
+    q2 = tke5(b1, b2, b3, b4, b5, theta, phi3, **kwens)
+    alpha = aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
+
+    return uw, vw, uu, vv, ww, q2, alpha
 
 
 def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=None, t=None):
