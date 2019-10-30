@@ -67,7 +67,7 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
         uv = b1var*0
 
     # Dewey & Stringer (2007)'s equation (132).
-    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
+    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi3*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
 
     if averaged:
         if enslen is not None:
@@ -474,7 +474,7 @@ def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, 
     # Dewey & Stringer (2007)'s equations (132, 133).
     if tilt_corr:
         coeff = -1/(4*S6C2)
-        uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi2*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
+        uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi3*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
         vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi2*b4pb3 + 4*S4C2*phi3*b5var + 4*S6C2*phi3*uv)
     else: # Same as 4-beam Janus case.
         coeff = 1/(2*sind(2*theta))
