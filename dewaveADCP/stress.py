@@ -276,16 +276,16 @@ def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=Non
     S2 = Sth**2
     C2 = Cth**2
     csc2th = 1/sind(2*theta)
-    cotth = Cth/Sth
+    Tth = Sth/Cth
 
     phi2, phi3 = phi2*d2r, phi3*d2r
     b2mb1 = b2var - b1var
     b4mb3 = b4var - b3var
     b1234 = b1var + b2var + b3var + b4var
-    Fth = cotth*phi2*b4mb3 + (1 - 2*csc2th)*phi3*b2mb1
+    Fth = Tth*phi2*b4mb3 + (1 - 2*csc2th)*phi3*b2mb1
 
     # D&S Equation 135.
-    num = 2*S2*b5var + cotth*phi3*b2mb1 - cotth*phi2*b4mb3
+    num = 2*S2*b5var + Tth*phi3*b2mb1 - Tth*phi2*b4mb3
     den = b1234 - 4*C2*b5var + Fth
     alpha = num/den
 
