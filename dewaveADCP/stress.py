@@ -174,12 +174,13 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
 
     phi2, phi3 = phi2*d2r, phi3*d2r
     b2mb1 = b2var - b1var
+    b2pb1 = b2var + b1var
     b4mb3 = b4var - b3var
     b4pb3 = b4var + b3var
     coeff = -1/(4*S6C2)
 
     # D&S Equation 130.
-    vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var) - S4C2*phi3*b2mb1 + 2*S3C3*phi3*b2mb1 - 2*S5C1*phi2*b4mb3)
+    vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var) - 2*S4C2*phi3*b2pb1 + 4*S3C3*phi3*b2mb1 - 2*S5C1*phi2*b4mb3)
 
     if averaged:
         if enslen is not None:
