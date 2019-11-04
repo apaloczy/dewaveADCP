@@ -44,7 +44,7 @@ def rstress5(b1, b2, b3, b4, b5, theta, phi2, phi3, dewave=True,
     return uw, vw, uu, vv, ww, q2, alpha
 
 
-def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=None, t=None):
+def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -67,7 +67,10 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
         uv = b1var*0
 
     # Dewey & Stringer (2007)'s equation (132).
-    uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi3*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
+    if tilt_corr:
+        uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi3*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
+    else:
+        uw = coeff*S5C1*b2mb1
 
     if averaged:
         if enslen is not None:
@@ -82,7 +85,7 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
     return uw
 
 
-def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=None, t=None):
+def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -106,7 +109,10 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
         uv = b3var*0
 
     # Dewey & Stringer (2007)'s equation (133).
-    vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi3*b4pb3 + 4*S4C4*phi3*b5var + 4*S6C2*phi2*b5var + 4*S6C2*phi3*uv)
+    if tilt_corr:
+        vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi3*b4pb3 + 4*S4C4*phi3*b5var + 4*S6C2*phi2*b5var + 4*S6C2*phi3*uv)
+    else:
+        vw = coeff*S5C1*b4mb3
 
     if averaged:
         if enslen is not None:
@@ -121,7 +127,7 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, averaged=True, enslen=None, z=
     return vw
 
 
-def uurs5(b1, b2, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
+def uurs5(b1, b2, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <u'u'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b5.
@@ -142,7 +148,10 @@ def uurs5(b1, b2, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
     coeff = -1/(4*S6C2)
 
     # D&S Equation 129.
-    uu = coeff*(-2*S4C2*(b2pb1 - 2*C2*b5var) + 2*S5C1*phi3*b2mb1)
+    if tilt_corr:
+        uu = coeff*(-2*S4C2*(b2pb1 - 2*C2*b5var) + 2*S5C1*phi3*b2mb1)
+    else:
+        uu = coeff*(-2*S4C2*(b2pb1 - 2*C2*b5var))
 
     if averaged:
         if enslen is not None:
@@ -157,7 +166,7 @@ def uurs5(b1, b2, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
     return uu
 
 
-def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <v'v'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -181,7 +190,10 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
     coeff = -1/(4*S6C2)
 
     # D&S Equation 130.
-    vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var) - 2*S4C2*phi3*b2pb1 + 4*S3C3*phi3*b2mb1 - 2*S5C1*phi2*b4mb3)
+    if tilt_corr:
+        vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var) - 2*S4C2*phi3*b2pb1 + 4*S3C3*phi3*b2mb1 - 2*S5C1*phi2*b4mb3)
+    else:
+        vv = coeff*(-2*S4C2*(b4pb3 - 2*C2*b5var))
 
     if averaged:
         if enslen is not None:
@@ -196,7 +208,7 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
     return vv
 
 
-def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <w'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -215,7 +227,10 @@ def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
     coeff = -1/(4*S6C2)
 
     # D&S Equation 131.
-    ww = coeff*(-2*S5C1*phi3*b2mb1 + 2*S5C1*phi2*b4mb3 - 4*S6C2*b5var)
+    if tilt_corr:
+        ww = coeff*(-2*S5C1*phi3*b2mb1 + 2*S5C1*phi2*b4mb3 - 4*S6C2*b5var)
+    else:
+        ww = coeff*(-4*S6C2*b5var)
 
     if averaged:
         if enslen is not None:
@@ -230,7 +245,7 @@ def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=N
     return ww
 
 
-def tke5(b1, b2, b3, b4, b5, theta, phi3, averaged=True, enslen=None, z=None, t=None):
+def tke5(b1, b2, b3, b4, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the turbulent kinetic energy q^2/2
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -250,7 +265,10 @@ def tke5(b1, b2, b3, b4, b5, theta, phi3, averaged=True, enslen=None, z=None, t=
     coeff = 1/(4*S2)
 
     # D&S Equation 134.
-    q2 = coeff*(b1234 - 2*(2*C2 - S2)*b5var - (cotth - 1)*phi3*b2mb1) # q^2/2, not q^2.
+    if tilt_corr:
+        q2 = coeff*(b1234 - 2*(2*C2 - S2)*b5var - (cotth - 1)*phi3*b2mb1) # q^2/2, not q^2.
+    else:
+        q2 = coeff*(b1234 - 2*(2*C2 - S2)*b5var)
 
     if averaged:
         if enslen is not None:
@@ -265,7 +283,7 @@ def tke5(b1, b2, b3, b4, b5, theta, phi3, averaged=True, enslen=None, z=None, t=
     return q2
 
 
-def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=None, z=None, t=None):
+def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the anisotropy ratio alpha
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -287,8 +305,13 @@ def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, averaged=True, enslen=Non
     Fth = Tth*phi2*b4mb3 + (1 - 2*csc2th)*phi3*b2mb1
 
     # D&S Equation 135.
-    num = 2*S2*b5var + Tth*phi3*b2mb1 - Tth*phi2*b4mb3
-    den = b1234 - 4*C2*b5var + Fth
+    if tilt_corr:
+        num = 2*S2*b5var + Tth*phi3*b2mb1 - Tth*phi2*b4mb3
+        den = b1234 - 4*C2*b5var + Fth
+    else:
+        num = 2*S2*b5var
+        den = b1234 - 4*C2*b5var
+
     alpha = num/den
 
     if averaged:
@@ -317,7 +340,7 @@ def rstress4(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
     raise NotImplementedError
 
 
-def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=None):
+def uwrs4(b1, b2, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
@@ -347,7 +370,10 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=Non
     coeff = 1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
-    uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
+    if tilt_corr:
+        uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
+    else:
+        uw = -coeff*b2mb1
 
     if averaged:
         if enslen is not None:
@@ -361,7 +387,7 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=Non
     return uw
 
 
-def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=None):
+def vwrs4(b3, b4, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
@@ -389,7 +415,10 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, averaged=True, enslen=None, z=Non
     coeff = 1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
-    vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+    if tilt_corr:
+        vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+    else:
+        vw = -coeff*b4mb3
 
     if averaged:
         if enslen is not None:
