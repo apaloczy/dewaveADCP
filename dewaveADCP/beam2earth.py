@@ -422,7 +422,7 @@ def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
     """
     USAGE
     -----
-    b1m, b2m, b3m, b4m = binmap5(b1, b2, b3, b4, r, theta, ptch, roll, how='linear')
+    b1m, b2m, b3m, b4m = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear')
 
     theta, ptch and roll must be in RADIANS.
 

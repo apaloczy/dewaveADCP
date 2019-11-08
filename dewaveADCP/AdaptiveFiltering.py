@@ -2,11 +2,11 @@ import numpy as np
 from xarray import DataArray
 
 
-def bvar4AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
@@ -71,11 +71,11 @@ def bvar4AF(b1, b2, b3, b4, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=Fa
     return b1var, b2var, b3var, b4var
 
 
-def bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
@@ -140,11 +140,11 @@ def bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbos
     return b1var, b2var, b3var, b4var, b5var
 
 
-def bvel5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvel5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1, b2, b3, b4, b5 = bvel5AF(b1, b2, b3, b4, b5, t, theta, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1, b2, b3, b4, b5 = bvel5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
