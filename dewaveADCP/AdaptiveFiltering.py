@@ -2,11 +2,34 @@ import numpy as np
 from xarray import DataArray
 
 
-def bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def interpub1ub2(ub1, ub2, t, max_badfrac, k, verbose=False):
+    fbad01 = np.isnan(ub1)
+    fbad02 = np.isnan(ub2)
+    ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
+    ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
+
+    # Clip remaining NaNs after interpolating.
+    fg = ~np.logical_or(np.isnan(ub1), np.isnan(ub2))
+    ub1 = ub1[fg]
+    ub2 = ub2[fg]
+    nt = t.size
+    if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
+        if verbose:
+            print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
+        return None, None
+    else:
+        if verbose:
+            nfbad = np.sum(~fg)
+            print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
+            print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
+
+    return ub1, ub2
+
+def bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
@@ -25,27 +48,24 @@ def bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad01 = np.isnan(ub1)
-            fbad02 = np.isnan(ub2)
-            ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-            ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-
-            # Clip remaining NaNs after interpolating.
-            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
-            ub1 = ub1[~fbad]
-            ub2 = ub2[~fbad]
-            ntt = ub2.size
-            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
+            if interpolate:
+                ub1, ub2 = interpub1ub2(ub1, ub2, t, max_badfrac, k, verbose=verbose)
+                if ub1 is None:
+                    continue
+            else: # Take only timestamps where both levels are non-NaN.
+                fub1ub2 = np.logical_and(~np.isnan(ub1), ~np.isnan(ub2))
+                ub1 = ub1[fub1ub2]
+                ub2 = ub2[fub1ub2]
+                percg = fub1ub2.sum()/nt
+                if percg<(1-max_badfrac):
+                    if verbose:
+                        print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
+                    continue
                 if verbose:
-                    print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
-                continue
-            else:
-                if verbose:
-                    nfbad = fbad.sum()
-                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
-                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
+                    print("Using only non-NaNs (%.1f%% data points, bin #%d)"%(100*percg,k+1))
 
             # Make windowed data matrix A from velocities at bin 2.
+            ntt = ub2.size
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
             for i in range(0, ntt-Lw):
                 A[i,:] = ub2[i:i+Lw]
@@ -71,11 +91,11 @@ def bvar4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
     return b1var, b2var, b3var, b4var
 
 
-def bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
@@ -94,27 +114,24 @@ def bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad01 = np.isnan(ub1)
-            fbad02 = np.isnan(ub2)
-            ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-            ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-
-            # Clip remaining NaNs after interpolating.
-            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
-            ub1 = ub1[~fbad]
-            ub2 = ub2[~fbad]
-            ntt = ub2.size
-            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
+            if interpolate:
+                ub1, ub2 = interpub1ub2(ub1, ub2, t, max_badfrac, k, verbose=verbose)
+                if ub1 is None:
+                    continue
+            else: # Take only timestamps where both levels are non-NaN.
+                fub1ub2 = np.logical_and(~np.isnan(ub1), ~np.isnan(ub2))
+                ub1 = ub1[fub1ub2]
+                ub2 = ub2[fub1ub2]
+                percg = fub1ub2.sum()/nt
+                if percg<(1-max_badfrac):
+                    if verbose:
+                        print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
+                    continue
                 if verbose:
-                    print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
-                continue
-            else:
-                if verbose:
-                    nfbad = fbad.sum()
-                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
-                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
+                    print("Using only non-NaNs (%.1f%% data points, bin #%d)"%(100*percg,k+1))
 
             # Make windowed data matrix A from velocities at bin 2.
+            ntt = ub2.size
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
             for i in range(0, ntt-Lw):
                 A[i,:] = ub2[i:i+Lw]
@@ -140,11 +157,11 @@ def bvar5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False
     return b1var, b2var, b3var, b4var, b5var
 
 
-def bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
-    b1, b2, b3, b4, b5 = bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False)
+    b1, b2, b3, b4, b5 = bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False)
 
     Acknowledgement: Part of this function was based on
     original MATLAB code kindly provided by Johanna Rosman.
@@ -163,27 +180,24 @@ def bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad01 = np.isnan(ub1)
-            fbad02 = np.isnan(ub2)
-            ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-            ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-
-            # Clip remaining NaNs after interpolating.
-            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
-            ub1 = ub1[~fbad]
-            ub2 = ub2[~fbad]
-            ntt = ub2.size
-            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
+            if interpolate:
+                ub1, ub2 = interpub1ub2(ub1, ub2, t, max_badfrac, k, verbose=verbose)
+                if ub1 is None:
+                    continue
+            else: # Take only timestamps where both levels are non-NaN.
+                fub1ub2 = np.logical_and(~np.isnan(ub1), ~np.isnan(ub2))
+                ub1 = ub1[fub1ub2]
+                ub2 = ub2[fub1ub2]
+                percg = fub1ub2.sum()/nt
+                if percg<(1-max_badfrac):
+                    if verbose:
+                        print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
+                    continue
                 if verbose:
-                    print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
-                continue
-            else:
-                if verbose:
-                    nfbad = fbad.sum()
-                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
-                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
+                    print("Using only non-NaNs (%.1f%% data points, bin #%d)"%(100*percg,k+1))
 
             # Make windowed data matrix A from velocities at bin 2.
+            ntt = ub2.size
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
             for i in range(0, ntt-Lw):
                 A[i,:] = ub2[i:i+Lw]
@@ -209,7 +223,7 @@ def bvel4AF(b1, b2, b3, b4, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
     return b1vel, b2vel, b3vel, b4vel
 
 
-def bvel5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False):
+def bvel5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, interpolate=False, max_badfrac=0.3, verbose=False):
     """
     USAGE
     -----
@@ -232,27 +246,24 @@ def bvel5AF(b1, b2, b3, b4, b5, t, sep=6, Lw=128, max_badfrac=0.3, verbose=False
             ub1 = ub[:,k]
             ub2 = ub[:,k+sep]
 
-            fbad01 = np.isnan(ub1)
-            fbad02 = np.isnan(ub2)
-            ub1 = DataArray(ub1, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-            ub2 = DataArray(ub2, coords=dict(t=t), dims='t').interpolate_na(dim='t').values
-
-            # Clip remaining NaNs after interpolating.
-            fbad = np.logical_or(np.isnan(ub1), np.isnan(ub2))
-            ub1 = ub1[~fbad]
-            ub2 = ub2[~fbad]
-            ntt = ub2.size
-            if (np.maximum(fbad01.sum()/nt, fbad02.sum()/nt))>max_badfrac: # If either bin had too many NaNs, interpolated too much, skip.
+            if interpolate:
+                ub1, ub2 = interpub1ub2(ub1, ub2, t, max_badfrac, k, verbose=verbose)
+                if ub1 is None:
+                    continue
+            else: # Take only timestamps where both levels are non-NaN.
+                fub1ub2 = np.logical_and(~np.isnan(ub1), ~np.isnan(ub2))
+                ub1 = ub1[fub1ub2]
+                ub2 = ub2[fub1ub2]
+                percg = fub1ub2.sum()/nt
+                if percg<(1-max_badfrac):
+                    if verbose:
+                        print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
+                    continue
                 if verbose:
-                    print("More than ", 100*max_badfrac,"%% NaNs, skipping bin #%d."%k)
-                continue
-            else:
-                if verbose:
-                    nfbad = fbad.sum()
-                    print("Interpolated over %d/%d NaNs in the bottom/top bin."%(fbad01.sum()-nfbad, fbad02.sum()-nfbad))
-                    print("After interpolation, removed %d additional NaNs in both bins."%nfbad)
+                    print("Using only non-NaNs (%.1f%% data points, bin #%d)"%(100*percg,k+1))
 
             # Make windowed data matrix A from velocities at bin 2.
+            ntt = ub2.size
             A = np.matrix(np.empty((ntt-Lw, Lw)))*np.nan
             for i in range(0, ntt-Lw):
                 A[i,:] = ub2[i:i+Lw]
