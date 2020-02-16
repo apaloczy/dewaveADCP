@@ -22,10 +22,12 @@ def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=No
         assert r is not None, "Must provide r if using bin-mapping."
         assert ptch is not None, "Must provide pitch if using bin-mapping."
         assert roll is not None, "Must provide roll if using bin-mapping."
-        print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
+        if verbose:
+            print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
         b1, b2, b3, b4 = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how=binmaptype)
     else:
-        print('Bin-mapping NOT applied.')
+        if verbose:
+            print('Bin-mapping NOT applied.')
 
     if use3beamsol:
         b1, b2, b3, b4 = janus3beamsol(b1, b2, b3, b4)
@@ -164,13 +166,15 @@ def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, 
     Cph3 = np.cos(roll)
 
     if gimbaled: # Correct heading (D&S 2007, eq. A2).
-        print('Gimbaled instrument case.')
+        if verbose:
+            print('Gimbaled instrument case.')
         Sph2Sph3 = Sph2*Sph3
         head = head + np.arcsin( Sph2Sph3/np.sqrt(Cph2**2 + Sph2Sph3**2) )
         Sph1 = np.sin(head)
         Cph1 = np.cos(head)
     else:                      # Correct pitch (D&S 2007, eq. A1 Lohrmann et al. 1990, eq. A1).
-        print('Fixed instrument case.')
+        if verbose:
+            print('Fixed instrument case.')
         ptch = np.arcsin( (Sph2*Cph3)/np.sqrt(1 - (Sph2*Sph3)**2) )
         Sph2 = np.sin(ptch)
         Cph2 = np.cos(ptch)
@@ -218,10 +222,12 @@ def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmapty
         assert r is not None, "Must provide r if using bin-mapping."
         assert ptch is not None, "Must provide pitch if using bin-mapping."
         assert roll is not None, "Must provide roll if using bin-mapping."
-        print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
+        if verbose:
+            print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
         b1, b2, b3, b4, b5 = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how=binmaptype)
     else:
-        print('Bin-mapping NOT applied.')
+        if verbose:
+            print('Bin-mapping NOT applied.')
 
     if use3beamsol:
         b1, b2, b3, b4 = janus3beamsol(b1, b2, b3, b4)
@@ -368,13 +374,15 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
     Cph3 = np.cos(roll)
 
     if gimbaled: # Correct heading (D&S 2007, eq. A2).
-        print('Gimbaled instrument case.')
+        if verbose:
+            print('Gimbaled instrument case.')
         Sph2Sph3 = Sph2*Sph3
         head = head + np.arcsin( Sph2Sph3/np.sqrt(Cph2**2 + Sph2Sph3**2) )
         Sph1 = np.sin(head)
         Cph1 = np.cos(head)
     else:                      # Correct pitch (D&S 2007, eq. A1 Lohrmann et al. 1990, eq. A1).
-        print('Fixed instrument case.')
+        if verbose:
+            print('Fixed instrument case.')
         ptch = np.arcsin( (Sph2*Cph3)/np.sqrt(1 - (Sph2*Sph3)**2) )
         Sph2 = np.sin(ptch)
         Cph2 = np.cos(ptch)
@@ -404,12 +412,14 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
     w5 = Vz5*cz3 # w from beam 5 only.
 
     if uvwbeam5:
-        print('Using vertical beam for [u, v, w].')
+        if verbose:
+            print('Using vertical beam for [u, v, w].')
         u = +Vx*cx1 + Vy*cy1 + Vz5*cz1
         v = -Vx*cx2 + Vy*cy2 - Vz5*cz2
         w = -Vx*cx3 + Vy*cy3 + w5
     else:
-        print('Using only beams 1-4 for [u, v, w].')
+        if verbose:
+            print('Using only beams 1-4 for [u, v, w].')
         u = +Vx*cx1 + Vy*cy1 + Vz*cz1
         v = -Vx*cx2 + Vy*cy2 - Vz*cz2
         w = -Vx*cx3 + Vy*cy3 + Vz*cz3
