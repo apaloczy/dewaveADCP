@@ -44,7 +44,7 @@ def rstress5(b1, b2, b3, b4, b5, theta, phi2, phi3, dewave=True,
     return uw, vw, uu, vv, ww, q2, alpha
 
 
-def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def uwrs5(b1, b2, b5, theta, phi2, phi3, variances=True, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -52,7 +52,11 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True,
     The formula for the small-angle
     approximation is used (D&S equation 132).
     """
-    b1var, b2var, b5var = map(bvar, (b1, b2, b5))
+    if variances:
+        b1var, b2var, b5var = b1, b2, b5
+    else:
+        b1var, b2var, b5var = map(bvar, (b1, b2, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -85,7 +89,7 @@ def uwrs5(b1, b2, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True,
     return uw
 
 
-def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def vwrs5(b3, b4, b5, theta, phi2, phi3, variances=True, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <v'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4, b5.
@@ -93,7 +97,11 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True,
     The formula for the small-angle
     approximation is used (D&S equation 133).
     """
-    b3var, b4var, b5var = map(bvar, (b3, b4, b5))
+    if variances:
+        b3var, b4var, b5var = b3, b4, b5
+    else:
+        b3var, b4var, b5var = map(bvar, (b3, b4, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -127,7 +135,7 @@ def vwrs5(b3, b4, b5, theta, phi2, phi3, uv=None, tilt_corr=True, averaged=True,
     return vw
 
 
-def uurs5(b1, b2, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def uurs5(b1, b2, b5, theta, phi3, variances=True, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <u'u'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b5.
@@ -135,7 +143,11 @@ def uurs5(b1, b2, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z
     The formula for the small-angle
     approximation is used (D&S equation 129).
     """
-    b1var, b2var, b5var = map(bvar, (b1, b2, b5))
+    if variances:
+        b1var, b2var, b5var = b1, b2, b5
+    else:
+        b1var, b2var, b5var = map(bvar, (b1, b2, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -166,7 +178,7 @@ def uurs5(b1, b2, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z
     return uu
 
 
-def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, variances=True, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <v'v'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -174,7 +186,11 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, 
     The formula for the small-angle
     approximation is used (D&S equation 130).
     """
-    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    if variances:
+        b1var, b2var, b3var, b4var, b5var = b1, b2, b3, b4, b5
+    else:
+        b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -208,7 +224,7 @@ def vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, 
     return vv
 
 
-def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, variances=True, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the <w'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -216,7 +232,11 @@ def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, 
     The formula for the small-angle
     approximation is used (D&S equation 131).
     """
-    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    if variances:
+        b1var, b2var, b3var, b4var, b5var = b1, b2, b3, b4, b5
+    else:
+        b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S6C2 = (Sth**6)*(Cth**2)
     S5C1 = (Sth**5)*(Cth)
@@ -245,7 +265,7 @@ def wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, 
     return ww
 
 
-def tke5(b1, b2, b3, b4, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def tke5(b1, b2, b3, b4, b5, theta, phi3, variances=True, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the turbulent kinetic energy q^2/2
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -253,7 +273,11 @@ def tke5(b1, b2, b3, b4, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=
     The formula for the small-angle
     approximation is used (D&S equation 134).
     """
-    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    if variances:
+        b1var, b2var, b3var, b4var, b5var = b1, b2, b3, b4, b5
+    else:
+        b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S2 = Sth**2
     C2 = Cth**2
@@ -283,7 +307,7 @@ def tke5(b1, b2, b3, b4, b5, theta, phi3, tilt_corr=True, averaged=True, enslen=
     return q2
 
 
-def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
+def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, variances=True, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
     """
     Calculates the anisotropy ratio alpha
     from the along-beam velocities b1, b2, b3, b4 and b5.
@@ -291,7 +315,11 @@ def aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, tilt_corr=True, averaged=
     The formula for the small-angle
     approximation is used (D&S equation 135).
     """
-    b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+    if variances:
+        b1var, b2var, b3var, b4var, b5var = b1, b2, b3, b4, b5
+    else:
+        b1var, b2var, b3var, b4var, b5var = map(bvar, (b1, b2, b3, b4, b5))
+
     Sth, Cth = sind(theta), cosd(theta)
     S2 = Sth**2
     C2 = Cth**2
@@ -340,7 +368,7 @@ def rstress4(b1, b2, b3, b4, b5, theta, phi1, phi2, phi3):
     raise NotImplementedError
 
 
-def uwrs4(b1, b2, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
+def uwrs4(b1, b2, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b1, b2. If 'enu' is provided as a tuple
@@ -351,11 +379,15 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
     The formula for the small-angle
     approximation is used (D&S equation 32).
     """
+    if variances:
+        b1var, b2var = b1, b2
+    else:
+        b1var, b2var = map(bvar, (b1, b2))
+
     Sth, Cth = sind(theta), cosd(theta)
     S2 = Sth**2
 
     phi2, phi3 = phi2*d2r, phi3*d2r
-    b1var, b2var = map(bvar, (b1, b2))
 
     # Calculate correction terms uv and ww from Earth velocities, if available.
     if enu is not None:
@@ -367,13 +399,13 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
 
     b2mb1 = b2var - b1var
     b2pb1 = b2var + b1var
-    coeff = 1/(2*sind(2*theta))
+    coeff = -1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
     if tilt_corr:
-        uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
+        uw = coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv
     else:
-        uw = -coeff*b2mb1
+        uw = coeff*b2mb1
 
     if averaged:
         if enslen is not None:
@@ -387,7 +419,7 @@ def uwrs4(b1, b2, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
     return uw
 
 
-def vwrs4(b3, b4, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
+def vwrs4(b3, b4, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None):
     """
     Calculates the <u'w'> component of the Reynolds stress tensor
     from the along-beam velocities b3, b4. If 'enu' is provided as a tuple
@@ -398,11 +430,15 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
     The formula for the small-angle
     approximation is used (D&S equation 33).
     """
+    if variances:
+        b3var, b4var = b3, b4
+    else:
+        b3var, b4var = map(bvar, (b3, b4))
+
     Sth, Cth = sind(theta), cosd(theta)
     S2 = Sth**2
 
     phi2, phi3 = phi2*d2r, phi3*d2r
-    b3var, b4var = map(bvar, (b3, b4))
 
     # Calculate correction terms uv and ww from Earth velocities, if available.
     if enu is not None:
@@ -412,13 +448,13 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
 
     b4mb3 = b4var - b3var
     b4pb3 = b4var + b3var
-    coeff = 1/(2*sind(2*theta))
+    coeff = -1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
     if tilt_corr:
-        vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
+        vw = coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv
     else:
-        vw = -coeff*b4mb3
+        vw = coeff*b4mb3
 
     if averaged:
         if enslen is not None:
@@ -430,98 +466,6 @@ def vwrs4(b3, b4, theta, phi2, phi3, enu=None, tilt_corr=True, averaged=True, en
             vw = np.nanmean(vw, axis=1)
 
     return vw
-
-
-def uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, sep=6, Lw=128, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw):
-    """
-    USAGE
-    -----
-    uw, vw = uwvwrs4AF(b1, b2, b3, b4, t, theta, phi2, phi3, Lw=128, enu=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw)
-    """
-    # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
-    b1var, b2var, b3var, b4var = bvar4AF(b1, b2, b3, b4, t, theta, sep=sep, Lw=Lw, **kw)
-    Sth, Cth = sind(theta), cosd(theta)
-    S2 = Sth**2
-
-    phi2, phi3 = phi2*d2r, phi3*d2r
-
-    # Calculate correction terms uv and ww from Earth velocities, if available.
-    if enu is not None:
-        u, v, w = enu
-        uv = u*v
-        ww = w*w
-    else:
-        ww = uv = b1var*0
-
-    b2mb1 = b2var - b1var
-    b2pb1 = b2var + b1var
-    b4mb3 = b4var - b3var
-    b4pb3 = b4var + b3var
-    coeff = 1/(2*sind(2*theta))
-
-    # Dewey & Stringer (2007)'s equations (32, 33).
-    if tilt_corr:
-        uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
-        vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
-    else:
-        uw = -coeff*b2mb1
-        vw = -coeff*b4mb3
-
-    if averaged:
-        if enslen is not None:
-            uw, vw, tens = avgensuwvw(uw, vw, t, enslen)
-            return uw, vw, tens
-        else:
-            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
-            return uw, vw
-    else:
-        return uw, vw
-
-
-def uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, sep=6, Lw=128, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw):
-    """
-    USAGE
-    -----
-    uw, vw = uwvwrs5AF(b1, b2, b3, b4, b5, t, theta, phi2, phi3, Lw=128, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, **kw)
-    """
-    # Calculate beam variances corrected for surface wave bias using the Adaptive Filtering Method.
-    b1var, b2var, b3var, b4var, b5var = bvar5AF(b1, b2, b3, b4, b5, t, theta, sep=sep, Lw=Lw, **kw)
-    Sth, Cth = sind(theta), cosd(theta)
-    S6C2 = (Sth**6)*(Cth**2)
-    S5C1 = (Sth**5)*(Cth)
-    S4C2 = (Sth**4)*(Cth**2)
-    S4C4 = (Sth*Cth)**4
-
-    phi2, phi3 = phi2*d2r, phi3*d2r
-
-    # Calculate correction term uv from Earth velocities, if available.
-    if uv is None:
-        uv = b1var*0
-
-    b2mb1 = b2var - b1var
-    b2pb1 = b2var + b1var
-    b4mb3 = b4var - b3var
-    b4pb3 = b4var + b3var
-
-    # Dewey & Stringer (2007)'s equations (132, 133).
-    if tilt_corr:
-        coeff = -1/(4*S6C2)
-        uw = coeff*(S5C1*b2mb1 + 2*S4C2*phi3*b2pb1 - 4*S4C2*phi3*b5var - 4*S6C2*phi2*uv)
-        vw = coeff*(S5C1*b4mb3 - 2*S4C2*phi3*b4pb3 + 4*S4C4*phi3*b5var + 4*S6C2*phi2*b5var + 4*S6C2*phi3*uv)
-    else: # Same as 4-beam Janus case.
-        coeff = 1/(2*sind(2*theta))
-        uw = -coeff*b2mb1
-        vw = -coeff*b4mb3
-
-    if averaged:
-        if enslen is not None:
-            uw, vw, tens = avgensuwvw(uw, vw, t, enslen)
-            return uw, vw, tens
-        else:
-            uw, vw = np.nanmean(uw, axis=1), np.nanmean(vw, axis=1)
-            return uw, vw
-    else:
-        return uw, vw
 
 
 def uwrs4_detrend(b1, b2, r, theta, phi2, phi3, enu=None, averaged=True, dpoly=1, detrend_time=False, lowhi_Tcutoff=None, dts=None, cap_band=False, **kw):
