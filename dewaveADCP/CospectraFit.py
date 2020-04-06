@@ -155,7 +155,7 @@ def kaimel72spec(k, c1, c2):
     """Free parameters: c1, c2 = (uwstar, k0)."""
     f73 = 7/3
     C = f73*np.sin(np.pi/f73)/np.pi
-    return np.cumsum(c1*C*(1/c2)/(1 + (k/c2)**f73)*np.gradient(k))
+    return np.cumsum((c1*C*(1/c2)/(1 + (k/c2)**f73))*np.gradient(k))
 
 
 def Couwvw_fit(k, Couw_Ogive, func=kaimel72spec, c1c2guess=(5e-4, 2)):
