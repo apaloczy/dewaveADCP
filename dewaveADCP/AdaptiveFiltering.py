@@ -8,8 +8,8 @@ def bvarAF(b, sep=6, Lw=8, max_badfrac=0.5, mindet=1e-4, verbose=False):
     -----
     bvar_dewaved = bvarAF(bvel, sep=6, Lw=8, max_badfrac=0.5, verbose=False)
     """
-    nz, nt = ub.shape()
-    bvardw = np.empty()
+    nz, nt = b.shape
+    bvardw = np.empty(nz)*np.nan
     b = b.T # Each row is a timestamp.
     for k in range(nz-sep):
         ub1 = b[:,k]

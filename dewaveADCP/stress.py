@@ -4,7 +4,7 @@ from scipy.optimize import curve_fit
 from xarray import DataArray
 from .VarianceFit import varfitw, sgwvar_func, calc_beta
 from .VerticalDetrend import dewave_verticaldetrend, fexp
-from .AdaptiveFiltering import bvar4AF, bvar5AF, bvel5AF
+from .AdaptiveFiltering import bvarAF
 from .utils import sind, cosd, fourfilt
 
 d2r = np.pi/180
@@ -28,20 +28,7 @@ def rstress5(b1, b2, b3, b4, b5, theta, phi2, phi3, dewave=True,
     If 'dewave' is set to True (default), uses the Adaptive Filtering Method to filter out the surface
     gravity wave signal from beam velocities prior to calculating the stresses.
     """
-    if dewave:
-        assert t is not None, "Need t for de-waving."
-        b1, b2, b3, b4, b5 = bvel5AF(b1, b2, b3, b4, b5, t, theta, **kw)
-
-    kwens = dict(averaged=averaged, enslen=enslen, z=z, t=t)
-    uw = uwrs5(b1, b2, b5, theta, phi2, phi3, uv=uv, **kwens)
-    vw = vwrs5(b3, b4, b5, theta, phi2, phi3, uv=uv, **kwens)
-    uu = uurs5(b1, b2, b5, theta, phi3, **kwens)
-    vv = vvrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
-    ww = wwrs5(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
-    q2 = tke5(b1, b2, b3, b4, b5, theta, phi3, **kwens)
-    alpha = aniso_ratio(b1, b2, b3, b4, b5, theta, phi2, phi3, **kwens)
-
-    return uw, vw, uu, vv, ww, q2, alpha
+    return NotImplementedError
 
 
 def uwrs5(b1, b2, b5, theta, phi2, phi3, variances=True, uv=None, tilt_corr=True, averaged=True, enslen=None, z=None, t=None):
