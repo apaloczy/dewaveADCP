@@ -386,13 +386,13 @@ def uwrs4(b1, b2, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, a
 
     b2mb1 = b2var - b1var
     b2pb1 = b2var + b1var
-    coeff = -1/(2*sind(2*theta))
+    coeff = 1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
     if tilt_corr:
-        uw = coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv
+        uw = -(coeff*b2mb1 + (b2pb1/2 - ww)*phi3/S2 - phi2*uv)
     else:
-        uw = coeff*b2mb1
+        uw = -coeff*b2mb1
 
     if averaged:
         if enslen is not None:
@@ -435,13 +435,13 @@ def vwrs4(b3, b4, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, a
 
     b4mb3 = b4var - b3var
     b4pb3 = b4var + b3var
-    coeff = -1/(2*sind(2*theta))
+    coeff = 1/(2*sind(2*theta))
 
     # Dewey & Stringer (2007)'s equation (32).
     if tilt_corr:
-        vw = coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv
+        vw = -(coeff*b4mb3 - (b4pb3/2 - ww)*phi2/S2 + phi3*uv)
     else:
-        vw = coeff*b4mb3
+        vw = -coeff*b4mb3
 
     if averaged:
         if enslen is not None:
