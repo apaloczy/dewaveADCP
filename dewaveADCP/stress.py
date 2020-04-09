@@ -379,8 +379,8 @@ def uwrs4(b1, b2, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, a
     # Calculate correction terms uv and ww from Earth velocities, if available.
     if enu is not None:
         u, v, w = enu
-        uv = u*v
-        ww = w*w
+        uv = (u - np.nanmean(u, axis=1)[:, np.newaxis])*(v - np.nanmean(v, axis=1)[:, np.newaxis])
+        ww = (w - np.nanmean(w, axis=1)[:, np.newaxis])**2
     else:
         ww = uv = b1var*0
 
@@ -429,7 +429,9 @@ def vwrs4(b3, b4, theta, phi2, phi3, variances=True, enu=None, tilt_corr=True, a
 
     # Calculate correction terms uv and ww from Earth velocities, if available.
     if enu is not None:
-        raise NotImplementedError
+        u, v, w = enu
+        uv = (u - np.nanmean(u, axis=1)[:, np.newaxis])*(v - np.nanmean(v, axis=1)[:, np.newaxis])
+        ww = (w - np.nanmean(w, axis=1)[:, np.newaxis])**2
     else:
         ww = uv = b3var*0
 
