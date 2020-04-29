@@ -582,7 +582,6 @@ def mskfish(b1, b2, b3, b4, amp1, amp2, amp3, amp4, threshold=50):
         damp2 = ampmax - ampmin2
 
         if damp1>threshold:          # Fish in at least 1 beam.
-          print(Bi[k, fm[0]])
           Bi[k, fm[0]] = np.nan      # Mark k-th cell as bad.
           if k<nzm:                  # Also mark cells k+1 as bad, because
             Bi[k+1, fm[0]] = np.nan  # echo is measured at the end of the cells.
@@ -599,3 +598,52 @@ def mskfish(b1, b2, b3, b4, amp1, amp2, amp3, amp4, threshold=50):
       bb4[:, i] = Bi[:, 3]
 
     return bb1, bb2, bb3, bb4
+
+
+def getmskfish(amp1, amp2, amp3, amp4, threshold=50):
+    """
+    USAGE
+    -----
+    msk1, msk2, msk3, msk4 = getmskfish(amp1, amp2, amp3, amp4, threshold=50)
+
+    REFERENCE
+    ---------
+    ADCP Coordinate transformation: Formulas and calculations (2010), p 22-23
+    P/N 951-6079-00 (January 2010), Teledyne RD Instruments
+    Available at:
+    http://www.teledynemarine.com/Documents/Brand%20Support/RD%20INSTRUMENTS/
+    Technical%20Resources/Manuals%20and%20Guides/General%20Interest/Coordinate_Transformation.pdf
+    """
+    nz, nt = amp1.shape
+    nzm = nz - 1
+    msk1 = np.ones((nz, nt))
+    msk2 = msk1.copy()
+    msk3 = msk1.copy()
+    msk4 = msk1.copy()
+    for i in range(nt):
+      Bi = np.ones((nz, 4))
+      for k in range(nz):
+        ampk = [amp1[k, i], amp2[k, i], amp3[k, i], amp4[k, i]]
+        ampmax = np.max(ampk)
+        fm = np.argsort(ampk)[:2] # Weakest and second-weakest echo.
+        ampmin1, ampmin2 = ampk[fm[0]], ampk[fm[1]]
+        damp1 = ampmax - ampmin1
+        damp2 = ampmax - ampmin2
+
+        if damp1>threshold:          # Fish in at least 1 beam.
+          Bi[k, fm[0]] = np.nan      # Mark k-th cell as bad.
+          if k<nzm:                  # Also mark cells k+1 as bad, because
+            Bi[k+1, fm[0]] = np.nan  # echo is measured at the end of the cells.
+
+          if damp2>threshold:   # Fish in at least 2 beams.
+            Bi[k, :] = np.nan   # Mark all beams as bad.
+            if k<nzm:
+              Bi[k+1, :] = np.nan
+        else: # No fish detected on any beam at cell k.
+            pass
+      msk1[:, i] = Bi[:, 0]
+      msk2[:, i] = Bi[:, 1]
+      msk3[:, i] = Bi[:, 2]
+      msk4[:, i] = Bi[:, 3]
+
+    return msk1, msk2, msk3, msk4
