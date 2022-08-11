@@ -3,17 +3,16 @@
 # package (https://github.com/apaloczy/ADCPtools).
 import numpy as np
 from scipy.interpolate import interp1d
-from .utils import sind, cosd, near, nearfl
 
 
 ######################
 #### 4-beam Janus ####
 ######################
-def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=None, use3beamsol=True, verbose=True):
+def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=None, fill_value=np.nan, use3beamsol=True, verbose=True):
     """
     USAGE
     -----
-    vx, vy, vz = janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=None, use3beamsol=True, verbose=True)
+    vx, vy, vz = janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=None, fill_value=np.nan, use3beamsol=True, verbose=True)
 
     theta, ptch, roll must be in RADIANS.
     """
@@ -24,7 +23,7 @@ def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=No
         assert roll is not None, "Must provide roll if using bin-mapping."
         if verbose:
             print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
-        b1, b2, b3, b4 = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how=binmaptype)
+        b1, b2, b3, b4 = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how=binmaptype, fill_value=fill_value)
     else:
         if verbose:
             print('Bin-mapping NOT applied.')
@@ -58,7 +57,7 @@ def janus2xyz(b1, b2, b3, b4, theta, r=None, ptch=None, roll=None, binmaptype=No
     return Vx, Vy, Vz
 
 
-def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, binmaptype=None, use3beamsol=True, verbose=True):
+def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, binmaptype=None, fill_value=np.nan, use3beamsol=True, verbose=True):
     """
      USAGE
      -----
@@ -197,7 +196,7 @@ def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, 
     #                                 the same as the one used by the instrument's firmware if
     #                                 the coordinate transformation mode is set to "instrument
     #                                 coordinates" before deployment.
-    Vx, Vy, Vz = janus2xyz(b1, b2, b3, b4, theta, r=r, ptch=ptch, roll=roll, binmaptype=binmaptype, use3beamsol=use3beamsol, verbose=verbose)
+    Vx, Vy, Vz = janus2xyz(b1, b2, b3, b4, theta, r=r, ptch=ptch, roll=roll, binmaptype=binmaptype, fill_value=fill_value, use3beamsol=use3beamsol, verbose=verbose)
 
     u = +Vx*cx1 + Vy*cy1 + Vz*cz1
     v = -Vx*cx2 + Vy*cy2 - Vz*cz2
@@ -209,11 +208,11 @@ def janus2earth(head, ptch, roll, theta, b1, b2, b3, b4, r=None, gimbaled=True, 
 ######################
 #### 5-beam Janus ####
 ######################
-def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmaptype=None, use3beamsol=True, verbose=True):
+def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmaptype=None, fill_value=np.nan, use3beamsol=True, verbose=True):
     """
     USAGE
     -----
-    vx, vy, vz = janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=ptch, roll=roll, binmaptype=None, use3beamsol=True, verbose=True)
+    vx, vy, vz = janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=ptch, roll=roll, binmaptype=None, fill_value=np.nan, use3beamsol=True, verbose=True)
 
     theta, ptch, roll must be in RADIANS.
     """
@@ -224,7 +223,7 @@ def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmapty
         assert roll is not None, "Must provide roll if using bin-mapping."
         if verbose:
             print('Mapping bins to horizontal planes using *%s* interpolation.'%binmaptype)
-        b1, b2, b3, b4, b5 = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how=binmaptype)
+        b1, b2, b3, b4, b5 = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how=binmaptype, fill_value=fill_value)
     else:
         if verbose:
             print('Bin-mapping NOT applied.')
@@ -261,11 +260,11 @@ def janus2xyz5(b1, b2, b3, b4, b5, theta, r=None, ptch=None, roll=None, binmapty
     return Vx, Vy, Vz, Vz5
 
 
-def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=True, binmaptype=None, uvwbeam5=True, use3beamsol=True, verbose=True):
+def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=True, binmaptype=None, fill_value=np.nan, uvwbeam5=True, use3beamsol=True, verbose=True):
     """
      USAGE
      -----
-     u, v, w, w5 = janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=True, binmaptype=None, uvwbeam5=True, use3beamsol=True, verbose=True)
+     u, v, w, w5 = janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=True, binmaptype=None, fill_value=np.nan, uvwbeam5=True, use3beamsol=True, verbose=True)
 
      Calculates Earth velocities (u,v,w) = (east,north,up) from beam-referenced velocity time series
      from a 5-beam Janus ADCP, (e.g., Appendix A of Dewey & Stringer (2007), Equations A3-A11).
@@ -407,7 +406,7 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
     #                                 the same as the one used by the instrument's firmware if
     #                                 the coordinate transformation mode is set to "instrument
     #                                 coordinates" before deployment.
-    Vx, Vy, Vz, Vz5 = janus2xyz5(b1, b2, b3, b4, b5, theta, r=r, ptch=ptch, roll=roll, binmaptype=binmaptype, use3beamsol=use3beamsol, verbose=verbose)
+    Vx, Vy, Vz, Vz5 = janus2xyz5(b1, b2, b3, b4, b5, theta, r=r, ptch=ptch, roll=roll, binmaptype=binmaptype, fill_value=fill_value, use3beamsol=use3beamsol, verbose=verbose)
 
     w5 = Vz5*cz3 # w from beam 5 only.
 
@@ -428,11 +427,11 @@ def janus2earth5(head, ptch, roll, theta, b1, b2, b3, b4, b5, r=None, gimbaled=T
 
 
 
-def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
+def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear', fill_value=np.nan):
     """
     USAGE
     -----
-    b1m, b2m, b3m, b4m = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear')
+    b1m, b2m, b3m, b4m = binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear', fill_value=np.nan)
 
     theta, ptch and roll must be in RADIANS.
 
@@ -470,20 +469,22 @@ def binmap(b1, b2, b3, b4, r, theta, ptch, roll, how='linear'):
                            [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
             zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
-            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate", assume_sorted=True)(Z)
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value=fill_value, bounds_error=False, assume_sorted=True)(Z)
 
         Bo[:,:,i] = bmi
 
     return Bo[:,:,0], Bo[:,:,1], Bo[:,:,2], Bo[:,:,3]
 
 
-def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
+def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear', fill_value=np.nan):
     """
     USAGE
     -----
-    b1m, b2m, b3m, b4m, b5m = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear')
+    b1m, b2m, b3m, b4m, b5m = binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear', fill_value=np.nan)
 
     theta, ptch and roll must be in RADIANS.
+
+    fill_value can be np.nan, any value or "extrapolate".
 
     Interpolate beam-coordinate velocities to fixed horizontal planes based on tilt angles
     (pitch and roll).
@@ -496,7 +497,8 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
     Sph3 = np.sin(roll)
     Cph3 = np.cos(roll)
 
-    Z = r*Cth
+    ZJ = r*Cth
+    Z5 = r
     z00 = np.matrix([0, 0, -1]).T
 
     nz, nt = b1.shape
@@ -510,6 +512,11 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
     for i in range(5):
         Ei = E[:,i]
 
+        if i==4:
+            Zi = Z5
+        else:
+            Zi = ZJ
+
         Boi = Bo[:,:,i] # z, t, bi.
         bmi = Boi.copy()
 
@@ -519,7 +526,8 @@ def binmap5(b1, b2, b3, b4, b5, r, theta, ptch, roll, how='linear'):
                             [-Sph3[k]*Cph2[k], Sph2[k],  Cph2[k]*Cph3[k]]])
 
             zi = np.array((PR*Ei).T*z00*r).squeeze() # Actual bin height, dot product of tilt matrix with along-beam distance vector.
-            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value="extrapolate", assume_sorted=True)(Z)
+
+            bmi[:,k] = interp1d(zi, Boi[:,k], kind=how, fill_value=fill_value, bounds_error=False, assume_sorted=True)(Zi)
 
         Bo[:,:,i] = bmi
 
